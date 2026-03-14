@@ -1,0 +1,81 @@
+PYTHON BASICS — MINDFLOW REFERENCE
+
+LISTS
+A list is an ordered collection of items. Lists are mutable — you can change them after creation.
+Example: my_list = [1, 2, 3, 4, 5]
+Access items by index: my_list[0] returns 1. Negative index: my_list[-1] returns 5.
+Add items: my_list.append(6) adds to the end. my_list.insert(0, 0) adds at position.
+Remove items: my_list.remove(3) removes by value. my_list.pop() removes last item.
+Loop through a list: for item in my_list: print(item)
+List comprehension: squares = [x**2 for x in range(10)]
+
+DICTIONARIES
+A dictionary stores key-value pairs. Keys must be unique.
+Example: person = {"name": "Alice", "age": 25}
+Access values: person["name"] returns "Alice"
+Add or update: person["email"] = "alice@example.com"
+Check if key exists: if "name" in person:
+Loop through: for key, value in person.items(): print(key, value)
+Get with default: person.get("phone", "not found")
+
+FUNCTIONS
+Define with def keyword. Functions can take parameters and return values.
+Example:
+def add(a, b):
+    return a + b
+result = add(3, 4)  # result is 7
+Default parameters: def greet(name="World"): return f"Hello {name}"
+*args for variable arguments: def total(*numbers): return sum(numbers)
+**kwargs for keyword arguments: def info(**details): print(details)
+
+CLASSES AND OBJECTS
+A class is a blueprint. An object is an instance of that blueprint.
+class Dog:
+    def __init__(self, name, breed):
+        self.name = name
+        self.breed = breed
+    def bark(self):
+        return f"{self.name} says woof!"
+my_dog = Dog("Rex", "Labrador")
+print(my_dog.bark())
+Inheritance: class Puppy(Dog): inherits all Dog methods
+
+ERROR HANDLING
+Use try/except to handle errors gracefully.
+try:
+    result = 10 / 0
+except ZeroDivisionError:
+    print("Cannot divide by zero")
+except Exception as e:
+    print(f"Error: {e}")
+finally:
+    print("This always runs")
+
+FILE HANDLING
+Open files with open(). Always use with statement to auto-close.
+Read: with open("file.txt", "r") as f: content = f.read()
+Write: with open("file.txt", "w") as f: f.write("Hello")
+Append: with open("file.txt", "a") as f: f.write("more text")
+
+LIST SLICING
+Extract parts of a list using slicing.
+my_list = [0, 1, 2, 3, 4, 5]
+my_list[1:4] returns [1, 2, 3]
+my_list[:3] returns [0, 1, 2]
+my_list[3:] returns [3, 4, 5]
+my_list[::2] returns every second element [0, 2, 4]
+my_list[::-1] reverses the list [5, 4, 3, 2, 1, 0]
+
+LAMBDA FUNCTIONS
+Anonymous one-line functions.
+square = lambda x: x**2
+sorted_list = sorted(items, key=lambda x: x["age"])
+
+COMMON STRING METHODS
+text = "Hello World"
+text.lower() → "hello world"
+text.upper() → "HELLO WORLD"
+text.split(" ") → ["Hello", "World"]
+text.strip() → removes whitespace from both ends
+text.replace("World", "Python") → "Hello Python"
+f"My name is {name}" → string formatting

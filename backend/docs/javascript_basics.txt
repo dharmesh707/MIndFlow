@@ -1,0 +1,183 @@
+type nul > docs\javascript_basics.txt
+type nul > docs\dsa_basics.txt
+```
+
+Open `docs\javascript_basics.txt` and paste this:
+```
+JAVASCRIPT BASICS — MINDFLOW REFERENCE
+
+VARIABLES
+Three ways to declare: var (old, avoid), let (block-scoped), const (cannot reassign).
+let name = "Alice"  — can be reassigned
+const PI = 3.14  — cannot be reassigned
+Always prefer const by default, use let when you need to reassign.
+
+ARRAYS
+let fruits = ["apple", "banana", "mango"]
+Access: fruits[0] returns "apple"
+Add to end: fruits.push("orange")
+Remove from end: fruits.pop()
+Find index: fruits.indexOf("banana") returns 1
+Loop: fruits.forEach(fruit => console.log(fruit))
+Map — transform each item: let upper = fruits.map(f => f.toUpperCase())
+Filter — keep matching items: let long = fruits.filter(f => f.length > 5)
+Reduce — combine into one value: let total = nums.reduce((sum, n) => sum + n, 0)
+
+OBJECTS
+let person = { name: "Alice", age: 25 }
+Access: person.name or person["name"]
+Add property: person.email = "alice@example.com"
+Destructuring: const { name, age } = person
+Spread operator: let copy = { ...person, city: "Mumbai" }
+Loop through keys: Object.keys(person).forEach(key => console.log(key))
+
+FUNCTIONS
+Regular: function add(a, b) { return a + b }
+Arrow function: const add = (a, b) => a + b
+Default parameter: const greet = (name = "World") => "Hello " + name
+Callback: setTimeout(() => console.log("done"), 1000)
+
+PROMISES AND ASYNC/AWAIT
+Promises handle asynchronous operations.
+fetch("https://api.example.com/data")
+  .then(response => response.json())
+  .then(data => console.log(data))
+  .catch(error => console.error(error))
+Async/await is cleaner syntax for the same thing:
+async function getData() {
+  try {
+    const response = await fetch("https://api.example.com/data")
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error(error)
+  }
+}
+
+DOM MANIPULATION
+Select elements: document.getElementById("myId")
+Select multiple: document.querySelectorAll(".myClass")
+Change text: element.textContent = "new text"
+Change style: element.style.color = "red"
+Add class: element.classList.add("active")
+Listen for events: element.addEventListener("click", () => console.log("clicked"))
+
+ERROR HANDLING
+try {
+  JSON.parse("invalid json")
+} catch (error) {
+  console.error("Parse failed:", error.message)
+}
+
+ARRAY DESTRUCTURING
+const [first, second, ...rest] = [1, 2, 3, 4, 5]
+first = 1, second = 2, rest = [3, 4, 5]
+
+TEMPLATE LITERALS
+const name = "Alice"
+console.log(`Hello ${name}, you are ${25} years old`)
+Multi-line strings work naturally inside backticks.
+```
+
+Then open `docs\dsa_basics.txt` and paste this:
+```
+DSA BASICS — MINDFLOW REFERENCE
+
+ARRAYS
+Fixed size collection of elements stored in contiguous memory.
+Access any element in O(1) time using index.
+Search unsorted array: O(n) — must check each element.
+Insert at end: O(1). Insert at middle: O(n) — must shift elements.
+Delete: O(n) in worst case due to shifting.
+Two pointer technique: use left and right pointers moving toward each other.
+Sliding window: maintain a window of fixed or variable size as you iterate.
+
+LINKED LIST
+Chain of nodes where each node holds data and a pointer to next node.
+Head points to first node. Last node points to null.
+Access element: O(n) — must traverse from head.
+Insert at head: O(1). Insert at tail: O(n) unless tail pointer maintained.
+Delete node: O(n) to find it, O(1) to remove once found.
+Types: Singly linked (one direction), Doubly linked (both directions), Circular.
+Common problems: reverse a linked list, detect cycle (Floyd's algorithm), find middle node.
+
+STACK
+Last In First Out (LIFO). Think of a stack of plates.
+Push adds to top. Pop removes from top. Peek looks at top without removing.
+All operations O(1).
+Use cases: undo operations, function call stack, balanced parentheses checking.
+Implement with array: use append() to push, pop() to pop.
+
+QUEUE
+First In First Out (FIFO). Think of a line at a ticket counter.
+Enqueue adds to back. Dequeue removes from front.
+Use collections.deque in Python for O(1) operations on both ends.
+Use cases: BFS traversal, task scheduling, print queue.
+
+BINARY SEARCH
+Only works on sorted arrays. Divide and conquer.
+Compare target with middle element.
+If equal — found. If target smaller — search left half. If larger — search right half.
+Time complexity: O(log n). Much faster than linear search O(n).
+Template:
+left, right = 0, len(arr) - 1
+while left <= right:
+    mid = (left + right) // 2
+    if arr[mid] == target: return mid
+    elif arr[mid] < target: left = mid + 1
+    else: right = mid - 1
+
+BUBBLE SORT
+Compare adjacent elements and swap if in wrong order.
+Repeat until no swaps needed.
+Time complexity: O(n²). Not efficient for large arrays.
+Good for: understanding sorting, nearly sorted arrays.
+
+MERGE SORT
+Divide array in half recursively until single elements.
+Merge sorted halves back together.
+Time complexity: O(n log n). Stable sort.
+Space complexity: O(n) extra space needed.
+
+QUICK SORT
+Pick a pivot element. Put smaller elements left, larger right.
+Recursively sort both halves.
+Average time: O(n log n). Worst case O(n²) with bad pivot choice.
+In practice faster than merge sort due to lower constants.
+
+HASH MAP
+Key-value store with O(1) average lookup, insert, delete.
+Hash function converts key into an array index.
+Collision: two keys hash to same index — handled by chaining or open addressing.
+In Python: regular dict is a hash map.
+Use cases: frequency counting, caching, two-sum problem.
+
+TREES
+Hierarchical data structure. Root at top, leaves at bottom.
+Binary tree: each node has at most two children (left and right).
+Binary Search Tree (BST): left child smaller than parent, right child larger.
+BST search: O(log n) average, O(n) worst case (unbalanced).
+Tree traversal:
+  Inorder (left, root, right) — gives sorted output for BST
+  Preorder (root, left, right) — used for copying tree
+  Postorder (left, right, root) — used for deleting tree
+Height of tree: number of edges on longest path from root to leaf.
+
+RECURSION
+Function that calls itself with a smaller version of the problem.
+Always needs a base case to stop — otherwise infinite loop.
+Example — factorial:
+def factorial(n):
+    if n == 0: return 1  # base case
+    return n * factorial(n-1)  # recursive case
+Think of recursion as: solve a tiny version, trust it works, build up.
+Common in: tree traversal, merge sort, quick sort, backtracking.
+
+BIG O NOTATION
+Describes how runtime grows as input size grows.
+O(1) — constant. Same time regardless of input size. Example: array access.
+O(log n) — logarithmic. Halves problem each step. Example: binary search.
+O(n) — linear. Time grows with input. Example: linear search.
+O(n log n) — linearithmic. Example: merge sort, quick sort average.
+O(n²) — quadratic. Nested loops. Example: bubble sort.
+O(2ⁿ) — exponential. Example: naive recursive fibonacci.

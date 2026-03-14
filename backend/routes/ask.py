@@ -8,11 +8,12 @@ router = APIRouter()
 class AskRequest(BaseModel):
     question: str
     mode: str  # "guide" or "show"
-    code_context: str = ""  # optional
+    code_context: str = ""
+    burnout_score: str = "Low"  # frontend passes this in — defaults to Low
 
-SHOW_ME_PROMPT = """You are a senior developer doing a code review. The user is stuck. 
-Provide the exact corrected code, explain every line of your solution clearly, 
-identify precisely where the original mistake was and why it caused the problem. 
+SHOW_ME_PROMPT = """You are a senior developer doing a code review. The user is stuck.
+Provide the exact corrected code, explain every line of your solution clearly,
+identify precisely where the original mistake was and why it caused the problem.
 Be direct and thorough."""
 
 @router.post("/api/ask")
@@ -24,8 +25,8 @@ async def ask(request: AskRequest):
         answer = ask_gemini(SHOW_ME_PROMPT, full_question)
         return {"answer": answer, "mode_used": "show", "grounded": False}
 
-    # Guide mode — use RAG pipeline
-    result = query_rag(request.question)
+    # Guide mode — use RAG pipeline with burnout awareness
+    result = query_rag(request.question, request.burnout_score)
     return {
         "answer": result["answer"],
         "mode_used": "guide",
