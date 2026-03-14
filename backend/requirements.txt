@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-dotenv
+supabase
+groq
+google-generativeai
+langchain
+langchain-community
+chromadb
+sentence-transformers
