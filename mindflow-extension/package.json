@@ -1,0 +1,40 @@
+{
+  "name": "mindflow",
+  "displayName": "MindFlow",
+  "description": "AI learning assistant and burnout tracker for developers",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mindflow-sidebar",
+          "title": "MindFlow",
+          "icon": "$(heart)"
+        }
+      ]
+    },
+    "views": {
+      "mindflow-sidebar": [
+        {
+          "type": "webview",
+          "id": "mindflow.panel",
+          "name": "AI Assistant"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "mindflow.open",
+        "title": "Open MindFlow"
+      }
+    ]
+  }
+}
