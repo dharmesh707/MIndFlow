@@ -1,10 +1,32 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import ask, checkin, log, dashboard, personal_report, report_export
+import threading
+import asyncio
+import sys
 
-app = FastAPI()
+def run_indexing_in_thread():
+    from scripts.index_documents import index_all_docs
+    if sys.platform == "win32":
+        loop = asyncio.ProactorEventLoop()
+        asyncio.set_event_loop(loop)
+    else:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+    loop.run_until_complete(index_all_docs())
+    loop.close()
 
-# CORS lets your frontend (localhost:3000) talk to backend (localhost:8000)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("🚀 MindFlow backend starting — indexing documentation...")
+    thread = threading.Thread(target=run_indexing_in_thread)
+    thread.start()
+    thread.join()
+    print("✅ Indexing done — backend ready!")
+    yield
+
+app = FastAPI(lifespan=lifespan)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://localhost:3001", "https://your-vercel-app.vercel.app"],
@@ -12,6 +34,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+from routes import ask, checkin, log, dashboard, personal_report, report_export
 
 app.include_router(ask.router)
 app.include_router(checkin.router)

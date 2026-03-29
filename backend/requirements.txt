@@ -8,3 +8,4 @@ langchain
 langchain-community
 chromadb
 sentence-transformers
+crawl4ai
