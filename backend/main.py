@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import ask, checkin, log, dashboard
+from routes import ask, checkin, log, dashboard, personal_report, report_export
 
 app = FastAPI()
 
@@ -17,6 +17,8 @@ app.include_router(ask.router)
 app.include_router(checkin.router)
 app.include_router(log.router)
 app.include_router(dashboard.router)
+app.include_router(personal_report.router)
+app.include_router(report_export.router)
 
 @app.get("/")
 def root():

@@ -1,6 +1,13 @@
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 export default function Home() {
+  const { userId } = auth();
+  if (userId) {
+    redirect("/dashboard");
+  }
+
   return (
     <main className="min-h-screen bg-gray-950 flex flex-col items-center justify-center text-white">
       <h1 className="text-5xl font-bold mb-4">MindFlow</h1>

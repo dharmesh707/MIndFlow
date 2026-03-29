@@ -4,35 +4,48 @@ export default function CheckinPopup({ userId, onClose, onCheckinDone }) {
   const [energy, setEnergy] = useState(null);
   const [onTrack, setOnTrack] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   async function handleSubmit() {
     if (energy === null || onTrack === null) return;
     setLoading(true);
+    setErrorMsg("");
     const today = new Date().toISOString().split("T")[0];
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/checkin`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: userId,
-            session_date: today,
-            checkin_number: 1,
-            energy_level: energy,
-            on_track: onTrack,
-            planned_hours: 2,
-            actual_topic: "Study session",
-          }),
-        },
-      );
+      const apiBase = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiBase) {
+        throw new Error("Missing NEXT_PUBLIC_API_URL");
+      }
+
+      const res = await fetch(`${apiBase}/api/checkin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          session_date: today,
+          checkin_number: 1,
+          energy_level: energy,
+          on_track: onTrack,
+          planned_hours: 2,
+          actual_topic: "Study session",
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Check-in API failed with ${res.status}`);
+      }
+
       const data = await res.json();
       onCheckinDone(data);
       onClose();
     } catch (err) {
       console.error(err);
+      setErrorMsg(
+        "Unable to save check-in right now. Backend or database may be down.",
+      );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   const energyOptions = [
@@ -255,6 +268,18 @@ export default function CheckinPopup({ userId, onClose, onCheckinDone }) {
         .mf-close-btn:hover {
           color: #94a3b8;
         }
+
+        .mf-checkin-error {
+          margin-top: -8px;
+          padding: 10px;
+          border-radius: 10px;
+          border: 1px solid rgba(239,68,68,0.2);
+          background: rgba(239,68,68,0.08);
+          color: #fca5a5;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px;
+          line-height: 1.4;
+        }
       `}</style>
 
       <div
@@ -266,11 +291,11 @@ export default function CheckinPopup({ userId, onClose, onCheckinDone }) {
             ×
           </button>
 
-          <div className="mf-checkin-title">// session check-in</div>
+          <div className="mf-checkin-title">{"// session check-in"}</div>
 
           {/* Energy */}
           <div>
-            <div className="mf-checkin-section-label">how's your energy?</div>
+            <div className="mf-checkin-section-label">how is your energy?</div>
             <div className="mf-energy-row">
               {energyOptions.map((opt) => (
                 <button
@@ -339,6 +364,8 @@ export default function CheckinPopup({ userId, onClose, onCheckinDone }) {
           >
             {loading ? "saving..." : "submit check-in →"}
           </button>
+
+          {errorMsg && <div className="mf-checkin-error">{errorMsg}</div>}
         </div>
       </div>
     </>

@@ -6,13 +6,20 @@ export default function MicroLog({ userId, streak }) {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentStreak, setCurrentStreak] = useState(streak || 0);
+  const [errorMsg, setErrorMsg] = useState("");
 
   async function handleLog() {
     if (!win.trim()) return;
     setLoading(true);
+    setErrorMsg("");
     const today = new Date().toISOString().split("T")[0];
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/log`, {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiBase) {
+        throw new Error("Missing NEXT_PUBLIC_API_URL");
+      }
+
+      const res = await fetch(`${apiBase}/api/log`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -21,13 +28,22 @@ export default function MicroLog({ userId, streak }) {
           log_date: today,
         }),
       });
+
+      if (!res.ok) {
+        throw new Error(`Log API failed with ${res.status}`);
+      }
+
       const data = await res.json();
       setCurrentStreak(data.streak_day);
       setSubmitted(true);
     } catch (err) {
       console.error(err);
+      setErrorMsg(
+        "Could not save your log right now. Backend or database may be down.",
+      );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (
@@ -143,6 +159,18 @@ export default function MicroLog({ userId, streak }) {
           box-shadow: 0 0 8px #22d3ee;
           flex-shrink: 0;
         }
+
+        .mf-log-error {
+          padding: 12px;
+          border-radius: 10px;
+          border: 1px solid rgba(239,68,68,0.2);
+          background: rgba(239,68,68,0.08);
+          color: #fca5a5;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px;
+          line-height: 1.4;
+          letter-spacing: 0.03em;
+        }
       `}</style>
 
       <div className="mf-micro-card">
@@ -176,6 +204,7 @@ export default function MicroLog({ userId, streak }) {
             >
               {loading ? "saving..." : "→ log win"}
             </button>
+            {errorMsg && <div className="mf-log-error">{errorMsg}</div>}
           </>
         )}
       </div>

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useUser, UserButton } from "@clerk/nextjs";
+import Link from "next/link";
 import AiAssistant from "@/components/AiAssistant";
 import BurnoutCard from "@/components/BurnoutCard";
 import CheckinPopup from "@/components/CheckinPopup";
@@ -9,32 +10,69 @@ import TrendChart from "@/components/TrendChart";
 
 export default function Dashboard() {
   const { user, isLoaded } = useUser();
-  const [dashboardData, setDashboardData] = useState(null);
+  const [dashboardData, setDashboardData] = useState({
+    trend_data: [],
+    current_streak: 0,
+    current_burnout_score: "Low",
+  });
   const [showCheckin, setShowCheckin] = useState(false);
   const [burnoutScore, setBurnoutScore] = useState("Low");
+  const [isDashboardLoading, setIsDashboardLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState("");
 
   useEffect(() => {
-    if (!isLoaded || !user) return;
+    if (!isLoaded) return;
+    if (!user) {
+      setIsDashboardLoading(false);
+      return;
+    }
+
     async function fetchDashboard() {
+      setDashboardError("");
+      setIsDashboardLoading(true);
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/dashboard?user_id=${user.id}`,
-        );
+        const apiBase = process.env.NEXT_PUBLIC_API_URL;
+        if (!apiBase) {
+          throw new Error("Missing NEXT_PUBLIC_API_URL");
+        }
+
+        const res = await fetch(`${apiBase}/api/dashboard?user_id=${user.id}`);
+        if (!res.ok) {
+          throw new Error(`Dashboard API failed with ${res.status}`);
+        }
+
         const data = await res.json();
-        setDashboardData(data);
+        setDashboardData({
+          trend_data: data?.trend_data || [],
+          current_streak: data?.current_streak || 0,
+          current_burnout_score: data?.current_burnout_score || "Low",
+        });
         setBurnoutScore(data.current_burnout_score || "Low");
       } catch (err) {
         console.error("Dashboard fetch failed", err);
+        setDashboardError(
+          "Dashboard data is temporarily unavailable. Backend or database may be down.",
+        );
+        setDashboardData({
+          trend_data: [],
+          current_streak: 0,
+          current_burnout_score: "Low",
+        });
+      } finally {
+        setIsDashboardLoading(false);
       }
     }
+
     fetchDashboard();
   }, [isLoaded, user]);
 
   function handleCheckinDone(result) {
-    setBurnoutScore(result.burnout_score);
+    if (result?.burnout_score) {
+      setBurnoutScore(result.burnout_score);
+    }
   }
 
-  if (!isLoaded) {
+  if (!isLoaded || (user && isDashboardLoading)) {
     return (
       <div
         style={{
@@ -49,7 +87,7 @@ export default function Dashboard() {
           letterSpacing: "0.1em",
         }}
       >
-        initializing...
+        syncing your dashboard...
       </div>
     );
   }
@@ -157,9 +195,34 @@ export default function Dashboard() {
           display: flex;
           align-items: center;
           gap: 6px;
+          text-decoration: none;
         }
 
         .mf-checkin-btn:hover {
+          background: rgba(99,102,241,0.1);
+          border-color: #6366f1;
+          box-shadow: 0 0 20px rgba(99,102,241,0.2);
+        }
+
+        .mf-reports-btn {
+          background: transparent;
+          border: 1px solid rgba(99,102,241,0.5);
+          color: #6366f1;
+          padding: 8px 16px;
+          border-radius: 8px;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          letter-spacing: 0.05em;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          text-decoration: none;
+        }
+
+        .mf-reports-btn:hover {
           background: rgba(99,102,241,0.1);
           border-color: #6366f1;
           box-shadow: 0 0 20px rgba(99,102,241,0.2);
@@ -173,6 +236,18 @@ export default function Dashboard() {
 
         .mf-grid-full {
           grid-column: 1 / -1;
+        }
+
+        .mf-error-banner {
+          margin-bottom: 20px;
+          padding: 12px 14px;
+          border-radius: 10px;
+          border: 1px solid rgba(239,68,68,0.2);
+          background: rgba(239,68,68,0.08);
+          color: #fca5a5;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px;
+          letter-spacing: 0.03em;
         }
 
         @media (max-width: 768px) {
@@ -194,10 +269,13 @@ export default function Dashboard() {
                 Mind<span>Flow</span>
               </div>
               <div className="mf-subtitle">
-                // welcome back, {user?.firstName?.toLowerCase() || "developer"}
+                {`// welcome back, ${user?.firstName?.toLowerCase() || "developer"}`}
               </div>
             </div>
             <div className="mf-header-actions">
+              <Link href="/reports" className="mf-reports-btn">
+                <span>📊</span> reports
+              </Link>
               <button
                 onClick={() => setShowCheckin(true)}
                 className="mf-checkin-btn"
@@ -207,6 +285,12 @@ export default function Dashboard() {
               <UserButton afterSignOutUrl="/" />
             </div>
           </header>
+
+          {dashboardError && (
+            <div className="mf-error-banner" role="alert">
+              {dashboardError}
+            </div>
+          )}
 
           {/* Grid */}
           <div className="mf-grid">

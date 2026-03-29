@@ -41,7 +41,9 @@ function analyzePatterns() {
   const backspaceRatio = deletions / window.length;
   const highErrorRate = backspaceRatio > 0.3;
 
-  const score = [speedDropped, tooManyPauses, highErrorRate].filter(Boolean).length;
+  const score = [speedDropped, tooManyPauses, highErrorRate].filter(
+    Boolean,
+  ).length;
 
   if (score >= 2) return "high";
   if (score === 1) return "medium";
@@ -53,9 +55,6 @@ function startAnalysisLoop() {
     const load = analyzePatterns();
 
     // DEBUG: shows current load level every 10 seconds — remove before final submission
-    vscode.window.showInformationMessage(
-      `MindFlow debug: load = ${load}, streak = ${highLoadStreak}`
-    );
 
     if (load === "high") {
       highLoadStreak++;
@@ -69,7 +68,7 @@ function startAnalysisLoop() {
         .showInformationMessage(
           "MindFlow detected high cognitive load. Take a 5 minute break?",
           "Log Check-in",
-          "Dismiss"
+          "Dismiss",
         )
         .then((selection) => {
           if (selection === "Log Check-in") {
@@ -114,7 +113,8 @@ class MindFlowPanel {
         } catch (error) {
           webviewView.webview.postMessage({
             command: "error",
-            message: "Cannot connect to MindFlow backend. Make sure it is running on port 8000.",
+            message:
+              "Cannot connect to MindFlow backend. Make sure it is running on port 8000.",
           });
         }
       }
@@ -124,7 +124,11 @@ class MindFlowPanel {
   _getHtml() {
     const fs = require("fs");
     const path = require("path");
-    const htmlPath = path.join(this.extensionUri.fsPath, "webview", "index.html");
+    const htmlPath = path.join(
+      this.extensionUri.fsPath,
+      "webview",
+      "index.html",
+    );
     return fs.readFileSync(htmlPath, "utf8");
   }
 }
@@ -132,11 +136,13 @@ class MindFlowPanel {
 function activate(context) {
   const provider = new MindFlowPanel(context.extensionUri);
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider("mindflow.panel", provider)
+    vscode.window.registerWebviewViewProvider("mindflow.panel", provider),
   );
   startKeystrokeTracker(context);
   startAnalysisLoop();
-  console.log("MindFlow: extension activated (panel + passive burnout detector).");
+  console.log(
+    "MindFlow: extension activated (panel + passive burnout detector).",
+  );
 }
 
 function deactivate() {

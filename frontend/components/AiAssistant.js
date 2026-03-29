@@ -43,14 +43,21 @@ export default function AiAssistant({ burnoutScore = "Low" }) {
   const [mode, setMode] = useState("guide");
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   async function handleSubmit() {
     if (!question.trim()) return;
     setLoading(true);
     setResponse(null);
+    setErrorMsg("");
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ask`, {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiBase) {
+        throw new Error("Missing NEXT_PUBLIC_API_URL");
+      }
+
+      const res = await fetch(`${apiBase}/api/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -60,9 +67,21 @@ export default function AiAssistant({ burnoutScore = "Low" }) {
           burnout_score: burnoutScore,
         }),
       });
+
+      if (!res.ok) {
+        throw new Error(`Ask API failed with ${res.status}`);
+      }
+
       const data = await res.json();
+      if (!data?.answer) {
+        throw new Error("Invalid response payload from backend");
+      }
       setResponse(data);
     } catch (err) {
+      console.error(err);
+      setErrorMsg(
+        "AI assistant is temporarily unavailable. Please check backend connectivity.",
+      );
       setResponse({
         answer: "Error connecting to backend.",
         grounded: false,
@@ -374,12 +393,24 @@ export default function AiAssistant({ burnoutScore = "Low" }) {
         }
 
         .mf-spacer { height: 8px; }
+
+        .mf-error {
+          margin-bottom: 14px;
+          padding: 10px 12px;
+          border-radius: 10px;
+          border: 1px solid rgba(239,68,68,0.2);
+          background: rgba(239,68,68,0.08);
+          color: #fca5a5;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 11px;
+          letter-spacing: 0.03em;
+        }
       `}</style>
 
       <div className="mf-ai-card">
         {/* Header */}
         <div className="mf-ai-header">
-          <div className="mf-ai-title">// ai assistant</div>
+          <div className="mf-ai-title">{"// ai assistant"}</div>
           <div
             className="mf-burnout-badge"
             style={{
@@ -469,6 +500,8 @@ export default function AiAssistant({ burnoutScore = "Low" }) {
         >
           {loading ? "thinking..." : "ask mindflow →"}
         </button>
+
+        {errorMsg && <div className="mf-error">{errorMsg}</div>}
 
         {/* Response */}
         {response && (

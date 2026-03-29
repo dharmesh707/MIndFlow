@@ -105,7 +105,7 @@ export default function TrendChart({ data }) {
 
         {chartData.length === 0 ? (
           <div className="mf-trend-empty">
-            // no session data yet. start a session to see your trend.
+            {"// no session data yet. start a session to see your trend."}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={200}>
