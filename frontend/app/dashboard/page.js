@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useUser, UserButton } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AiAssistant from "@/components/AiAssistant";
 import BurnoutCard from "@/components/BurnoutCard";
@@ -10,6 +11,7 @@ import TrendChart from "@/components/TrendChart";
 
 export default function Dashboard() {
   const { user, isLoaded } = useUser();
+  const router = useRouter();
   const [dashboardData, setDashboardData] = useState({
     trend_data: [],
     current_streak: 0,
@@ -27,20 +29,26 @@ export default function Dashboard() {
       return;
     }
 
-    async function fetchDashboard() {
-      setDashboardError("");
-      setIsDashboardLoading(true);
+    async function checkRoleAndLoad() {
       try {
         const apiBase = process.env.NEXT_PUBLIC_API_URL;
-        if (!apiBase) {
-          throw new Error("Missing NEXT_PUBLIC_API_URL");
+        const roleRes = await fetch(`${apiBase}/api/team/role/${user.id}`);
+        if (roleRes.ok) {
+          const roleData = await roleRes.json();
+          if (roleData.role === "manager") {
+            router.push("/team-dashboard");
+            return;
+          }
         }
+      } catch (err) {
+        console.error("Role check failed:", err);
+      }
 
+      // Only runs for students
+      try {
+        const apiBase = process.env.NEXT_PUBLIC_API_URL;
         const res = await fetch(`${apiBase}/api/dashboard?user_id=${user.id}`);
-        if (!res.ok) {
-          throw new Error(`Dashboard API failed with ${res.status}`);
-        }
-
+        if (!res.ok) throw new Error(`Dashboard API failed with ${res.status}`);
         const data = await res.json();
         setDashboardData({
           trend_data: data?.trend_data || [],
@@ -63,7 +71,7 @@ export default function Dashboard() {
       }
     }
 
-    fetchDashboard();
+    checkRoleAndLoad();
   }, [isLoaded, user]);
 
   function handleCheckinDone(result) {
@@ -94,17 +102,10 @@ export default function Dashboard() {
 
   return (
     <>
-      {/* Google Fonts import */}
-      <style>{`
+      <style suppressHydrationWarning>{`
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap');
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-          background: #080810;
-          color: #e2e8f0;
-        }
-
+        body { background: #080810; color: #e2e8f0; }
         .mf-dashboard {
           min-height: 100vh;
           background: #080810;
@@ -113,8 +114,6 @@ export default function Dashboard() {
           position: relative;
           overflow-x: hidden;
         }
-
-        /* Ambient background orb */
         .mf-dashboard::before {
           content: '';
           position: fixed;
@@ -126,7 +125,6 @@ export default function Dashboard() {
           pointer-events: none;
           z-index: 0;
         }
-
         .mf-dashboard::after {
           content: '';
           position: fixed;
@@ -138,48 +136,12 @@ export default function Dashboard() {
           pointer-events: none;
           z-index: 0;
         }
-
-        .mf-content {
-          position: relative;
-          z-index: 1;
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-
-        .mf-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 40px;
-        }
-
-        .mf-logo {
-          font-family: 'Syne', sans-serif;
-          font-size: 28px;
-          font-weight: 800;
-          color: #ffffff;
-          letter-spacing: -0.5px;
-          line-height: 1;
-        }
-
-        .mf-logo span {
-          color: #6366f1;
-        }
-
-        .mf-subtitle {
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 12px;
-          color: #475569;
-          margin-top: 6px;
-          letter-spacing: 0.05em;
-        }
-
-        .mf-header-actions {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
+        .mf-content { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; }
+        .mf-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+        .mf-logo { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; line-height: 1; }
+        .mf-logo span { color: #6366f1; }
+        .mf-subtitle { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #475569; margin-top: 6px; letter-spacing: 0.05em; }
+        .mf-header-actions { display: flex; align-items: center; gap: 12px; }
         .mf-checkin-btn {
           background: transparent;
           border: 1px solid rgba(99,102,241,0.5);
@@ -197,13 +159,7 @@ export default function Dashboard() {
           gap: 6px;
           text-decoration: none;
         }
-
-        .mf-checkin-btn:hover {
-          background: rgba(99,102,241,0.1);
-          border-color: #6366f1;
-          box-shadow: 0 0 20px rgba(99,102,241,0.2);
-        }
-
+        .mf-checkin-btn:hover { background: rgba(99,102,241,0.1); border-color: #6366f1; box-shadow: 0 0 20px rgba(99,102,241,0.2); }
         .mf-reports-btn {
           background: transparent;
           border: 1px solid rgba(99,102,241,0.5);
@@ -221,23 +177,9 @@ export default function Dashboard() {
           gap: 6px;
           text-decoration: none;
         }
-
-        .mf-reports-btn:hover {
-          background: rgba(99,102,241,0.1);
-          border-color: #6366f1;
-          box-shadow: 0 0 20px rgba(99,102,241,0.2);
-        }
-
-        .mf-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-        }
-
-        .mf-grid-full {
-          grid-column: 1 / -1;
-        }
-
+        .mf-reports-btn:hover { background: rgba(99,102,241,0.1); border-color: #6366f1; box-shadow: 0 0 20px rgba(99,102,241,0.2); }
+        .mf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .mf-grid-full { grid-column: 1 / -1; }
         .mf-error-banner {
           margin-bottom: 20px;
           padding: 12px 14px;
@@ -249,20 +191,14 @@ export default function Dashboard() {
           font-size: 11px;
           letter-spacing: 0.03em;
         }
-
         @media (max-width: 768px) {
-          .mf-grid {
-            grid-template-columns: 1fr;
-          }
-          .mf-dashboard {
-            padding: 20px;
-          }
+          .mf-grid { grid-template-columns: 1fr; }
+          .mf-dashboard { padding: 20px; }
         }
       `}</style>
 
       <div className="mf-dashboard">
         <div className="mf-content">
-          {/* Header */}
           <header className="mf-header">
             <div>
               <div className="mf-logo">
@@ -292,7 +228,6 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Grid */}
           <div className="mf-grid">
             <BurnoutCard score={burnoutScore} />
             <MicroLog
