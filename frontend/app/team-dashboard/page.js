@@ -9,6 +9,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
 
 export default function TeamDashboard() {
@@ -27,6 +28,7 @@ export default function TeamDashboard() {
   const [addTeamId, setAddTeamId] = useState("");
   const [addingMember, setAddingMember] = useState(false);
   const [addMsg, setAddMsg] = useState("");
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL;
   const hasFetched = useRef(false);
@@ -538,7 +540,344 @@ export default function TeamDashboard() {
           )}
         </div>
       </div>
+      {/* Team Analytics Section */}
+      <div className="tw-section" style={{ marginTop: "24px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            cursor: "pointer",
+          }}
+          onClick={() => setShowAnalytics(!showAnalytics)}
+        >
+          <div className="tw-section-title" style={{ marginBottom: 0 }}>
+            📊 Team Analytics
+          </div>
+          <span
+            style={{ fontSize: "13px", color: "#6366f1", fontWeight: "600" }}
+          >
+            {showAnalytics ? "▲ collapse" : "▼ expand"}
+          </span>
+        </div>
 
+        {showAnalytics && (
+          <div style={{ marginTop: "24px" }}>
+            {allMembers.length === 0 ? (
+              <div className="tw-empty">
+                No members yet. Add members to see team analytics.
+              </div>
+            ) : (
+              <>
+                {/* Row 1 — Engagement + Distribution */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "16px",
+                    marginBottom: "20px",
+                  }}
+                >
+                  {/* Team Engagement */}
+                  <div
+                    style={{
+                      background: "#f8fafc",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "10px",
+                      padding: "20px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: "600",
+                        color: "#94a3b8",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.8px",
+                        marginBottom: "12px",
+                      }}
+                    >
+                      Team Engagement Today
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "48px",
+                        fontWeight: "700",
+                        color: activeTodayCount > 0 ? "#22c55e" : "#94a3b8",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {totalMembers > 0
+                        ? Math.round((activeTodayCount / totalMembers) * 100)
+                        : 0}
+                      %
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        color: "#94a3b8",
+                        marginTop: "6px",
+                      }}
+                    >
+                      {activeTodayCount} of {totalMembers} members active
+                    </div>
+                    <div
+                      style={{
+                        marginTop: "12px",
+                        height: "6px",
+                        background: "#e2e8f0",
+                        borderRadius: "3px",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        style={{
+                          height: "100%",
+                          borderRadius: "3px",
+                          background: "#22c55e",
+                          width: `${totalMembers > 0 ? (activeTodayCount / totalMembers) * 100 : 0}%`,
+                          transition: "width 0.5s ease",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Burnout Distribution */}
+                  <div
+                    style={{
+                      background: "#f8fafc",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "10px",
+                      padding: "20px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: "600",
+                        color: "#94a3b8",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.8px",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      Burnout Distribution
+                    </div>
+                    {["Low", "Medium", "High"].map((level) => {
+                      const count = allMembers.filter(
+                        (m) => m.current_burnout === level,
+                      ).length;
+                      const pct =
+                        totalMembers > 0
+                          ? Math.round((count / totalMembers) * 100)
+                          : 0;
+                      const color =
+                        level === "Low"
+                          ? "#22c55e"
+                          : level === "Medium"
+                            ? "#f59e0b"
+                            : "#ef4444";
+                      return (
+                        <div key={level} style={{ marginBottom: "10px" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              marginBottom: "4px",
+                            }}
+                          >
+                            <span
+                              style={{ fontSize: "12px", color: "#64748b" }}
+                            >
+                              {level} Risk
+                            </span>
+                            <span
+                              style={{
+                                fontSize: "12px",
+                                fontWeight: "700",
+                                color,
+                              }}
+                            >
+                              {count} members ({pct}%)
+                            </span>
+                          </div>
+                          <div
+                            style={{
+                              height: "6px",
+                              background: "#e2e8f0",
+                              borderRadius: "3px",
+                              overflow: "hidden",
+                            }}
+                          >
+                            <div
+                              style={{
+                                height: "100%",
+                                borderRadius: "3px",
+                                background: color,
+                                width: `${pct}%`,
+                                transition: "width 0.5s ease",
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Row 2 — Member Wellness Comparison */}
+                <div
+                  style={{
+                    background: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "10px",
+                    padding: "20px",
+                    marginBottom: "20px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: "600",
+                      color: "#94a3b8",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.8px",
+                      marginBottom: "16px",
+                    }}
+                  >
+                    Member Wellness Comparison
+                  </div>
+                  <ResponsiveContainer
+                    width="100%"
+                    height={Math.max(120, allMembers.length * 40)}
+                  >
+                    <BarChart
+                      data={allMembers.map((m) => ({
+                        name: m.email.split("@")[0],
+                        wellness: getHealthPercent(m.current_burnout),
+                        color: getHealthColor(m.current_burnout),
+                      }))}
+                      layout="vertical"
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis
+                        type="number"
+                        domain={[0, 100]}
+                        stroke="#94a3b8"
+                        tick={{ fontSize: 11 }}
+                      />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        stroke="#94a3b8"
+                        tick={{ fontSize: 11 }}
+                        width={80}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: "white",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                        }}
+                        formatter={(val) => [`${val}%`, "Wellness"]}
+                      />
+                      <Bar dataKey="wellness" radius={[0, 4, 4, 0]}>
+                        {allMembers.map((m, i) => (
+                          <Cell
+                            key={i}
+                            fill={getHealthColor(m.current_burnout)}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Row 3 — At Risk Alert Panel */}
+                {atRiskCount > 0 && (
+                  <div
+                    style={{
+                      background: "#fef2f2",
+                      border: "1px solid #fecaca",
+                      borderRadius: "10px",
+                      padding: "20px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: "600",
+                        color: "#ef4444",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.8px",
+                        marginBottom: "14px",
+                      }}
+                    >
+                      ⚠️ At-Risk Members — Immediate Attention Needed
+                    </div>
+                    {allMembers
+                      .filter((m) => m.current_burnout === "High")
+                      .map((member) => (
+                        <div
+                          key={member.student_id}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            padding: "12px 16px",
+                            background: "white",
+                            borderRadius: "8px",
+                            border: "1px solid #fecaca",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          <div>
+                            <div
+                              style={{
+                                fontSize: "13px",
+                                fontWeight: "600",
+                                color: "#0f172a",
+                              }}
+                            >
+                              {member.email}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: "11px",
+                                color: "#94a3b8",
+                                marginTop: "2px",
+                              }}
+                            >
+                              Streak: {member.streak}d ·{" "}
+                              {member.active_today
+                                ? "Active today"
+                                : "Not checked in"}
+                            </div>
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <div
+                              style={{
+                                fontSize: "18px",
+                                fontWeight: "700",
+                                color: "#ef4444",
+                              }}
+                            >
+                              High Risk
+                            </div>
+                            <div style={{ fontSize: "11px", color: "#ef4444" }}>
+                              20% wellness
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </div>
       {/* Slide-in Detail Panel */}
       {selectedMember && (
         <>
