@@ -28,14 +28,15 @@ export default function TeamDashboard() {
   const [addingMember, setAddingMember] = useState(false);
   const [addMsg, setAddMsg] = useState("");
 
-  const apiBase = const hasFetched = useRef(false);
+  const apiBase = process.env.NEXT_PUBLIC_API_URL;
+  const hasFetched = useRef(false);
 
- useEffect(() => {
-  if (!isLoaded) return;
-  if (hasFetched.current) return;
-  hasFetched.current = true;
-  fetchTeamDashboard();
-}, [isLoaded]);
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+    fetchTeamDashboard();
+  }, [isLoaded]);
 
   async function fetchTeamDashboard() {
     setLoading(true);

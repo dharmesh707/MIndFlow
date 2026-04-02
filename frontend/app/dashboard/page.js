@@ -209,8 +209,8 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="mf-header-actions">
-              <Link href="/reports" className="mf-reports-btn">
-                <span>📊</span> reports
+              <Link href="/analytics" className="mf-reports-btn">
+                <span>📊</span> analytics
               </Link>
               <button
                 onClick={() => setShowCheckin(true)}
