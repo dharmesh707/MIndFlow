@@ -314,19 +314,21 @@ function activate(context) {
   startKeystrokeTracker(context);
   startAnalysisLoop();
 
-  // Start adaptive check-in system
   sessionStartTime = Date.now();
-  scheduleNextCheckin(3); // First check-in after 90 ± 5 min (Flow assumed at start)
-  // TESTING ONLY — remove after test:
-  // setTimeout(() => showCheckinPopup(), 30 * 1000);
+  scheduleNextCheckin(3);
+
+  // Test command — keep for demo
+  context.subscriptions.push(
+    vscode.commands.registerCommand("mindflow.testCheckin", () => {
+      showCheckinPopup();
+    }),
+  );
 
   vscode.window.showInformationMessage(
     "MindFlow activated 🧠 — adaptive check-ins enabled. First check-in in ~90 minutes.",
   );
 
-  console.log(
-    "MindFlow: extension activated (panel + keystroke detector + adaptive check-ins).",
-  );
+  console.log("MindFlow: extension activated.");
 }
 
 // ─── Deactivate ────────────────────────────────────────────
@@ -343,9 +345,3 @@ function deactivate() {
 }
 
 module.exports = { activate, deactivate };
-
-context.subscriptions.push(
-  vscode.commands.registerCommand("mindflow.testCheckin", () => {
-    showCheckinPopup();
-  }),
-);
