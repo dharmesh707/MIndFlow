@@ -9,7 +9,9 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./extension.js",
   "contributes": {
     "viewsContainers": {
@@ -34,6 +36,10 @@
       {
         "command": "mindflow.open",
         "title": "Open MindFlow"
+      },
+      {
+        "command": "mindflow.testCheckin",
+        "title": "MindFlow: Test Check-in Now"
       }
     ]
   }
