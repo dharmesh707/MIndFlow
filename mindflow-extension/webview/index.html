@@ -29,6 +29,27 @@
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       }
 
+      <!-- Cognitive State Display -->
+  <div id="cognitive-banner" style="
+  display: none;
+  margin-bottom: 14px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(99,102,241,0.08);
+  border: 1px solid rgba(99,102,241,0.2);
+  font-size: 10px;
+  color: #818cf8;
+">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <span id="cognitive-label">// cognitive state</span>
+    <span id="cognitive-confidence" style="color:#334155"></span>
+  </div>
+  <div id="cognitive-state" style="font-size:13px; font-weight:700; margin-top:4px; color:#e2e8f0;">
+    detecting...
+  </div>
+</div>
+
+
       .mf-logo {
         font-family: "Syne", sans-serif;
         font-size: 18px;
@@ -291,6 +312,43 @@
       <div class="mf-tagline">// ai pair programmer</div>
     </div>
 
+    <!-- Cognitive State Banner -->
+    <div
+      id="cognitive-banner"
+      style="
+        display: none;
+        margin-bottom: 14px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: rgba(99, 102, 241, 0.08);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        font-size: 10px;
+        color: #818cf8;
+      "
+    >
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        "
+      >
+        <span style="letter-spacing: 0.08em">// cognitive state</span>
+        <span id="cognitive-confidence" style="color: #334155"></span>
+      </div>
+      <div
+        id="cognitive-state"
+        style="
+          font-size: 13px;
+          font-weight: 700;
+          margin-top: 4px;
+          color: #e2e8f0;
+        "
+      >
+        detecting...
+      </div>
+    </div>
+
     <div class="mf-label">mode</div>
     <div class="mf-mode-row">
       <button
@@ -404,6 +462,25 @@
         const btn = document.getElementById("ask-btn");
         btn.disabled = false;
         btn.textContent = "ask mindflow →";
+
+        if (msg.command === "cognitiveState") {
+          const banner = document.getElementById("cognitive-banner");
+          const stateEl = document.getElementById("cognitive-state");
+          const confEl = document.getElementById("cognitive-confidence");
+
+          banner.style.display = "block";
+          stateEl.textContent = msg.emoji + " " + msg.state;
+          confEl.textContent = Math.round(msg.confidence) + "% confidence";
+
+          // Color by state
+          const colors = {
+            flow: "rgba(34,211,238,0.08)",
+            struggling: "rgba(245,158,11,0.08)",
+            fatigued: "rgba(239,130,68,0.08)",
+            frustrated: "rgba(239,68,68,0.08)",
+          };
+          banner.style.background = colors[msg.state] || colors.flow;
+        }
 
         if (msg.command === "response") {
           document.getElementById("response-area").style.display = "block";

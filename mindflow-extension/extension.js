@@ -1,14 +1,15 @@
 const vscode = require("vscode");
 
 // ─── Keystroke Tracker State ───────────────────────────────
-let keystrokes = [];
+let keystrokeEvents = [];
 let sessionAvgSpeed = null;
-let highLoadStreak = 0;
-let analysisTimer = null;
+let cognitiveTimer = null;
+let lastCognitiveState = "flow";
+let provider = null;
 
 // ─── Adaptive Check-in State ───────────────────────────────
 let checkinTimer = null;
-let lastEnergyLevel = 3; // default: flow state
+let lastEnergyLevel = 3;
 let checkinCount = 0;
 let sessionStartTime = null;
 
@@ -18,114 +19,146 @@ function startKeystrokeTracker(context) {
     const now = Date.now();
     event.contentChanges.forEach((change) => {
       const isDelete = change.text.length === 0 || change.rangeLength > 0;
-      keystrokes.push({ time: now, chars: change.text.length, isDelete });
+      keystrokeEvents.push({ time: now, chars: change.text.length, isDelete });
     });
   });
   context.subscriptions.push(listener);
 }
 
-// ─── Cognitive Load Analyzer ───────────────────────────────
-function analyzePatterns() {
-  const windowMs = 10 * 1000;
+// ─── Feature Extraction ────────────────────────────────────
+function extractFeatures() {
+  const windowMs = 60 * 1000;
   const now = Date.now();
-  const window = keystrokes.filter((k) => k.time > now - windowMs);
-  keystrokes = [];
+  const window = keystrokeEvents.filter((k) => k.time > now - windowMs);
+  keystrokeEvents = keystrokeEvents.filter((k) => k.time > now - windowMs);
 
-  if (window.length < 5) return "low";
+  if (window.length < 3) return null;
 
-  const totalChars = window.reduce((sum, k) => sum + k.chars, 0);
-  const speedCharsPerMin = (totalChars / 10) * 60;
-
-  if (sessionAvgSpeed === null) sessionAvgSpeed = speedCharsPerMin;
-  const speedDropped = speedCharsPerMin < sessionAvgSpeed * 0.6;
-  sessionAvgSpeed = (sessionAvgSpeed + speedCharsPerMin) / 2;
+  const totalChars = window.reduce((sum, k) => sum + (k.chars || 0), 0);
+  const typingSpeed = totalChars;
 
   const sorted = [...window].sort((a, b) => a.time - b.time);
   const gaps = sorted.slice(1).map((k, i) => k.time - sorted[i].time);
-  const longPauses = gaps.filter((g) => g > 5000).length;
-  const pausesPerMin = (longPauses / 10) * 60;
-  const tooManyPauses = pausesPerMin > 3;
+  const pauseFrequency = gaps.filter((g) => g > 2000).length;
 
   const deletions = window.filter((k) => k.isDelete).length;
-  const backspaceRatio = deletions / window.length;
-  const highErrorRate = backspaceRatio > 0.3;
+  const backspaceRatio = window.length > 0 ? deletions / window.length : 0;
 
-  const score = [speedDropped, tooManyPauses, highErrorRate].filter(
-    Boolean,
-  ).length;
+  let burstScore = 0.5;
+  if (gaps.length > 1) {
+    const avgGap = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+    const variance =
+      gaps.reduce((s, g) => s + Math.pow(g - avgGap, 2), 0) / gaps.length;
+    burstScore = Math.min(1.0, Math.sqrt(variance) / 2000);
+  }
 
-  if (score >= 2) return "high";
-  if (score === 1) return "medium";
-  return "low";
+  return {
+    typingSpeed: Math.round(typingSpeed),
+    pauseFrequency: Math.round(pauseFrequency * 10) / 10,
+    backspaceRatio: Math.round(backspaceRatio * 100) / 100,
+    burstScore: Math.round(burstScore * 100) / 100,
+    eventCount: window.length,
+  };
 }
 
-function startAnalysisLoop() {
-  analysisTimer = setInterval(() => {
-    const load = analyzePatterns();
+// ─── Cognitive Analysis Loop ────────────────────────────────
+function startCognitiveAnalysisLoop() {
+  cognitiveTimer = setInterval(async () => {
+    const features = extractFeatures();
+    if (!features) return;
 
-    if (load === "high") {
-      highLoadStreak++;
-    } else {
-      highLoadStreak = 0;
-    }
+    try {
+      const http = require("http");
+      const today = new Date().toISOString().split("T")[0];
+      const body = JSON.stringify({
+        user_id: "vscode_user",
+        typing_speed: features.typingSpeed,
+        pause_frequency: features.pauseFrequency,
+        backspace_ratio: features.backspaceRatio,
+        burst_score: features.burstScore,
+        raw_event_count: features.eventCount,
+        session_date: today,
+      });
 
-    if (highLoadStreak >= 2) {
-      highLoadStreak = 0;
-      vscode.window
-        .showInformationMessage(
-          "MindFlow detected high cognitive load. Take a 5 minute break?",
-          "Log Check-in",
-          "Dismiss",
-        )
-        .then((selection) => {
-          if (selection === "Log Check-in") {
-            vscode.commands.executeCommand("mindflow.panel.focus");
-          }
+      const data = await new Promise((resolve, reject) => {
+        const req = http.request(
+          {
+            hostname: "localhost",
+            port: 8000,
+            path: "/api/cognitive/analyze",
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Content-Length": Buffer.byteLength(body),
+            },
+          },
+          (res) => {
+            let raw = "";
+            res.on("data", (chunk) => (raw += chunk));
+            res.on("end", () => resolve(JSON.parse(raw)));
+          },
+        );
+        req.on("error", reject);
+        req.write(body);
+        req.end();
+      });
+
+      lastCognitiveState = data.state;
+
+      if (data.state === "fatigued" || data.state === "frustrated") {
+        vscode.window
+          .showWarningMessage(
+            `MindFlow ${data.emoji}: ${data.state.toUpperCase()} — ${data.message}`,
+            "Take a Break",
+            "Dismiss",
+          )
+          .then((action) => {
+            if (action === "Take a Break") {
+              vscode.env.openExternal(
+                vscode.Uri.parse("http://localhost:3000/dashboard"),
+              );
+            }
+          });
+      }
+
+      if (provider && provider._view) {
+        provider._view.webview.postMessage({
+          command: "cognitiveState",
+          state: data.state,
+          confidence: data.confidence,
+          emoji: data.emoji,
         });
+      }
+    } catch (err) {
+      // silent fail
     }
-  }, 90 * 1000);
+  }, 60 * 1000);
 }
 
 // ─── Adaptive Check-in System ──────────────────────────────
-
-/**
- * Returns next check-in interval in milliseconds.
- * Based on Ultradian Rhythm Research + Peretz Lavie's variable cycle research
- * + BF Skinner's Variable Ratio Scheduling (±5 min jitter prevents anticipation bias)
- *
- * Energy 3 (Flow)     → 90 min base
- * Energy 2 (Okay)     → 45 min base
- * Energy 1 (Depleted) → 20 min base
- * All levels get ±5 min random jitter
- */
 function getNextCheckinInterval(energyLevel) {
   const baseMinutes = energyLevel === 3 ? 90 : energyLevel === 2 ? 45 : 20;
-  const jitter = Math.floor(Math.random() * 10) - 5; // -5 to +5 minutes
-  const totalMinutes = Math.max(10, baseMinutes + jitter); // never less than 10 min
+  const jitter = Math.floor(Math.random() * 10) - 5;
+  const totalMinutes = Math.max(10, baseMinutes + jitter);
   return totalMinutes * 60 * 1000;
 }
 
 function scheduleNextCheckin(energyLevel) {
-  // Clear any existing timer
   if (checkinTimer) {
     clearTimeout(checkinTimer);
     checkinTimer = null;
   }
-
   const interval = getNextCheckinInterval(energyLevel);
   const minutes = Math.round(interval / 60000);
-
   checkinTimer = setTimeout(() => {
     showCheckinPopup();
   }, interval);
-
   console.log(`MindFlow: next check-in scheduled in ${minutes} minutes`);
 }
 
 async function showCheckinPopup() {
   checkinCount++;
 
-  // Step 1 — Ask energy level
   const energyPick = await vscode.window.showQuickPick(
     [
       {
@@ -152,12 +185,10 @@ async function showCheckinPopup() {
   );
 
   if (!energyPick) {
-    // User dismissed — reschedule at default 90 min
     scheduleNextCheckin(3);
     return;
   }
 
-  // Step 2 — Ask on-track
   const trackPick = await vscode.window.showQuickPick(
     [
       { label: "✅ Yes, on track", value: true },
@@ -175,12 +206,10 @@ async function showCheckinPopup() {
     return;
   }
 
-  // Step 3 — Send to backend
   lastEnergyLevel = energyPick.value;
 
   try {
     const today = new Date().toISOString().split("T")[0];
-
     const data = await new Promise((resolve, reject) => {
       const http = require("http");
       const body = JSON.stringify({
@@ -192,7 +221,6 @@ async function showCheckinPopup() {
         planned_hours: 2,
         actual_topic: "VS Code session",
       });
-
       const req = http.request(
         {
           hostname: "localhost",
@@ -210,15 +238,12 @@ async function showCheckinPopup() {
           res.on("end", () => resolve(JSON.parse(raw)));
         },
       );
-
       req.on("error", reject);
       req.write(body);
       req.end();
     });
 
     const burnoutScore = data.burnout_score || "Low";
-
-    // Step 4 — Show result + schedule next
     const nextMinutes = Math.round(
       getNextCheckinInterval(energyPick.value) / 60000,
     );
@@ -240,7 +265,6 @@ async function showCheckinPopup() {
     );
   }
 
-  // Schedule next check-in based on energy response
   scheduleNextCheckin(energyPick.value);
 }
 
@@ -264,17 +288,35 @@ class MindFlowPanel {
     webviewView.webview.onDidReceiveMessage(async (message) => {
       if (message.command === "ask") {
         try {
-          const response = await fetch("http://localhost:8000/api/ask", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              question: message.question,
-              mode: message.mode,
-              burnout_score: message.burnout_score,
-              code_context: message.code_context || "",
-            }),
+          const http = require("http");
+          const body = JSON.stringify({
+            question: message.question,
+            mode: message.mode,
+            burnout_score: message.burnout_score,
+            code_context: message.code_context || "",
           });
-          const data = await response.json();
+          const data = await new Promise((resolve, reject) => {
+            const req = http.request(
+              {
+                hostname: "localhost",
+                port: 8000,
+                path: "/api/ask",
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Content-Length": Buffer.byteLength(body),
+                },
+              },
+              (res) => {
+                let raw = "";
+                res.on("data", (chunk) => (raw += chunk));
+                res.on("end", () => resolve(JSON.parse(raw)));
+              },
+            );
+            req.on("error", reject);
+            req.write(body);
+            req.end();
+          });
           webviewView.webview.postMessage({
             command: "response",
             answer: data.answer,
@@ -306,18 +348,17 @@ class MindFlowPanel {
 
 // ─── Activate ──────────────────────────────────────────────
 function activate(context) {
-  const provider = new MindFlowPanel(context.extensionUri);
+  provider = new MindFlowPanel(context.extensionUri);
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider("mindflow.panel", provider),
   );
 
   startKeystrokeTracker(context);
-  startAnalysisLoop();
+  startCognitiveAnalysisLoop();
 
   sessionStartTime = Date.now();
   scheduleNextCheckin(3);
 
-  // Test command — keep for demo
   context.subscriptions.push(
     vscode.commands.registerCommand("mindflow.testCheckin", () => {
       showCheckinPopup();
@@ -333,9 +374,9 @@ function activate(context) {
 
 // ─── Deactivate ────────────────────────────────────────────
 function deactivate() {
-  if (analysisTimer) {
-    clearInterval(analysisTimer);
-    analysisTimer = null;
+  if (cognitiveTimer) {
+    clearInterval(cognitiveTimer);
+    cognitiveTimer = null;
   }
   if (checkinTimer) {
     clearTimeout(checkinTimer);
