@@ -3,8 +3,6 @@ import { useEffect, useState, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   XAxis,
@@ -12,10 +10,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  RadialBarChart,
-  RadialBar,
-  PieChart,
-  Pie,
   Cell,
 } from "recharts";
 
@@ -26,6 +20,7 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const hasFetched = useRef(false);
+  const [cognitiveHistory, setCognitiveHistory] = useState([]);
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL;
 
@@ -42,6 +37,15 @@ export default function AnalyticsPage() {
         if (!res.ok) throw new Error("Failed to fetch analytics");
         const data = await res.json();
         setReport(data);
+        try {
+          const cogRes = await fetch(
+            `${apiBase}/api/cognitive/history/vscode_user`,
+          );
+          const cogData = await cogRes.json();
+          setCognitiveHistory(cogData.history || []);
+        } catch (err) {
+          console.log("No cognitive history yet");
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -113,23 +117,22 @@ export default function AnalyticsPage() {
   const energyTrend = metrics.energy_trend || {};
   const velocity = metrics.weekly_velocity || {};
 
-  // Build energy direction chart data
   const energyChartData = [
     { label: "Current", value: ((energyTrend.current || 0) / 3) * 100 },
     { label: "Predicted", value: ((energyTrend.predicted_7d || 0) / 3) * 100 },
   ];
 
-  // Build velocity chart
   const velocityData = [
     { week: "Avg", wins: velocity.trend_avg || 0 },
     { week: "This week", wins: velocity.current_week || 0 },
   ];
 
-  // Energy distribution pie
-  const energyPie = [
-    { name: "Burnout Risk", value: burnoutPressure, color: "#ef4444" },
-    { name: "Safe Zone", value: 100 - burnoutPressure, color: "#22d3ee" },
-  ];
+  const cognitiveColors = {
+    flow: "#22d3ee",
+    struggling: "#f59e0b",
+    fatigued: "#f97316",
+    frustrated: "#ef4444",
+  };
 
   return (
     <>
@@ -137,10 +140,8 @@ export default function AnalyticsPage() {
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #080810; }
-
         .an-page { min-height: 100vh; background: #080810; color: #e2e8f0; padding: 32px; }
         .an-content { max-width: 1200px; margin: 0 auto; }
-
         .an-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
         .an-logo { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; color: #fff; }
         .an-logo span { color: #6366f1; }
@@ -153,92 +154,24 @@ export default function AnalyticsPage() {
           display: flex; align-items: center; gap: 6px;
         }
         .an-back-btn:hover { background: rgba(99,102,241,0.1); }
-
         .an-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         .an-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         .an-grid-full { margin-bottom: 20px; }
-
-        .an-card {
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(99,102,241,0.15);
-          border-radius: 14px; padding: 24px;
-        }
-
-        .an-card-title {
-          font-family: 'JetBrains Mono', monospace; font-size: 11px;
-          color: #6366f1; letter-spacing: 0.12em; text-transform: uppercase;
-          margin-bottom: 20px;
-        }
-
-        .an-wellness-circle {
-          display: flex; align-items: center; gap: 32px;
-        }
-
-        .an-score-big {
-          font-family: 'Syne', sans-serif; font-size: 64px;
-          font-weight: 800; line-height: 1;
-        }
-
-        .an-score-label {
-          font-family: 'JetBrains Mono', monospace; font-size: 11px;
-          color: #475569; margin-top: 4px;
-        }
-
-        .an-score-summary {
-          font-family: 'JetBrains Mono', monospace; font-size: 13px;
-          color: #94a3b8; line-height: 1.6;
-        }
-
-        .an-metric-row {
-          display: flex; justify-content: space-between;
-          align-items: center; margin-bottom: 14px;
-        }
-
-        .an-metric-label {
-          font-family: 'JetBrains Mono', monospace; font-size: 11px;
-          color: #475569; letter-spacing: 0.05em;
-        }
-
-        .an-metric-value {
-          font-family: 'JetBrains Mono', monospace; font-size: 13px;
-          font-weight: 700;
-        }
-
-        .an-bar-track {
-          height: 6px; background: rgba(255,255,255,0.06);
-          border-radius: 3px; overflow: hidden; margin-bottom: 16px;
-        }
-
+        .an-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(99,102,241,0.15); border-radius: 14px; padding: 24px; }
+        .an-card-title { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #6366f1; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 20px; }
+        .an-wellness-circle { display: flex; align-items: center; gap: 32px; }
+        .an-score-big { font-family: 'Syne', sans-serif; font-size: 64px; font-weight: 800; line-height: 1; }
+        .an-score-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #475569; margin-top: 4px; }
+        .an-score-summary { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #94a3b8; line-height: 1.6; }
+        .an-metric-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .an-metric-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #475569; letter-spacing: 0.05em; }
+        .an-metric-value { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; }
+        .an-bar-track { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-bottom: 16px; }
         .an-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
-
-        .an-data-badge {
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 4px 10px; border-radius: 20px;
-          font-family: 'JetBrains Mono', monospace; font-size: 10px;
-          font-weight: 600; letter-spacing: 0.05em;
-        }
-
-        .an-insight-card {
-          padding: 16px; border-radius: 10px; margin-bottom: 12px;
-        }
-
-        .an-insight-title {
-          font-family: 'JetBrains Mono', monospace; font-size: 11px;
-          font-weight: 700; letter-spacing: 0.08em; margin-bottom: 10px;
-        }
-
-        .an-insight-item {
-          font-family: 'JetBrains Mono', monospace; font-size: 11px;
-          color: #94a3b8; margin-bottom: 6px; padding-left: 12px;
-          border-left: 2px solid rgba(99,102,241,0.3);
-        }
-
-        .an-direction-badge {
-          display: inline-block; padding: 4px 12px; border-radius: 20px;
-          font-family: 'JetBrains Mono', monospace; font-size: 11px;
-          font-weight: 700; letter-spacing: 0.05em;
-        }
-
+        .an-data-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; }
+        .an-insight-item { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #94a3b8; margin-bottom: 6px; padding-left: 12px; border-left: 2px solid rgba(99,102,241,0.3); }
+        .an-direction-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; }
+        .an-cog-card { flex: 1; min-width: 120px; border-radius: 10px; padding: 16px; text-align: center; }
         @media (max-width: 768px) {
           .an-grid-2, .an-grid-3 { grid-template-columns: 1fr; }
           .an-page { padding: 20px; }
@@ -264,7 +197,6 @@ export default function AnalyticsPage() {
 
           {/* Row 1 — Wellness Score + Energy Trend */}
           <div className="an-grid-2">
-            {/* Wellness Score */}
             <div className="an-card">
               <div className="an-card-title">// overall wellness score</div>
               <div className="an-wellness-circle">
@@ -349,7 +281,6 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            {/* Energy Trend */}
             <div className="an-card">
               <div className="an-card-title">// energy trend forecast</div>
               <div
@@ -484,7 +415,6 @@ export default function AnalyticsPage() {
 
           {/* Row 2 — 3 Metric Cards */}
           <div className="an-grid-3">
-            {/* Consistency */}
             <div className="an-card">
               <div className="an-card-title">// logging consistency</div>
               <div className="an-metric-row">
@@ -516,7 +446,6 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            {/* Focus Stability */}
             <div className="an-card">
               <div className="an-card-title">// focus stability</div>
               <div className="an-metric-row">
@@ -548,7 +477,6 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            {/* Burnout Pressure */}
             <div className="an-card">
               <div className="an-card-title">// burnout pressure</div>
               <div className="an-metric-row">
@@ -581,7 +509,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* Row 3 — Weekly Velocity Chart */}
+          {/* Row 3 — Weekly Velocity */}
           <div className="an-grid-full">
             <div className="an-card">
               <div className="an-card-title">
@@ -674,7 +602,6 @@ export default function AnalyticsPage() {
 
           {/* Row 4 — Insights */}
           <div className="an-grid-3">
-            {/* Strengths */}
             <div className="an-card">
               <div className="an-card-title">// strengths</div>
               {insights.strengths?.length > 0 ? (
@@ -702,8 +629,6 @@ export default function AnalyticsPage() {
                 </div>
               )}
             </div>
-
-            {/* Risks */}
             <div className="an-card">
               <div className="an-card-title">// areas of concern</div>
               {insights.risks?.length > 0 ? (
@@ -731,8 +656,6 @@ export default function AnalyticsPage() {
                 </div>
               )}
             </div>
-
-            {/* Recommendations */}
             <div className="an-card">
               <div className="an-card-title">// recommendations</div>
               {insights.recommendations?.length > 0 ? (
@@ -761,6 +684,93 @@ export default function AnalyticsPage() {
               )}
             </div>
           </div>
+
+          {/* Row 5 — Cognitive State ML Analysis */}
+          {cognitiveHistory.length > 0 && (
+            <div className="an-grid-full">
+              <div className="an-card">
+                <div className="an-card-title">
+                  // cognitive state — ml pattern analysis
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "12px",
+                    flexWrap: "wrap",
+                    marginBottom: "16px",
+                  }}
+                >
+                  {["flow", "struggling", "fatigued", "frustrated"].map(
+                    (state) => {
+                      const count = cognitiveHistory.filter(
+                        (h) => h.predicted_state === state,
+                      ).length;
+                      const pct = Math.round(
+                        (count / cognitiveHistory.length) * 100,
+                      );
+                      return (
+                        <div
+                          key={state}
+                          style={{
+                            flex: 1,
+                            minWidth: "120px",
+                            background: `${cognitiveColors[state]}11`,
+                            border: `1px solid ${cognitiveColors[state]}33`,
+                            borderRadius: "10px",
+                            padding: "16px",
+                            textAlign: "center",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontFamily: "'JetBrains Mono', monospace",
+                              fontSize: "10px",
+                              color: "#475569",
+                              marginBottom: "6px",
+                              letterSpacing: "0.08em",
+                            }}
+                          >
+                            {state.toUpperCase()}
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: "'Syne', sans-serif",
+                              fontSize: "32px",
+                              fontWeight: "800",
+                              color: cognitiveColors[state],
+                            }}
+                          >
+                            {pct}%
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: "'JetBrains Mono', monospace",
+                              fontSize: "10px",
+                              color: "#334155",
+                              marginTop: "4px",
+                            }}
+                          >
+                            {count} session{count !== 1 ? "s" : ""}
+                          </div>
+                        </div>
+                      );
+                    },
+                  )}
+                </div>
+                <div
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: "10px",
+                    color: "#334155",
+                  }}
+                >
+                  based on {cognitiveHistory.length} keystroke analysis sessions
+                  · müller & fritz (2015) · zuger et al. (2018) weighted
+                  classifier
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>

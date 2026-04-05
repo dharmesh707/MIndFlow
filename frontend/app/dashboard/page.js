@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import AiAssistant from "@/components/AiAssistant";
+import WellnessChatbot from "@/components/WellnessChatbot";
 import BurnoutCard from "@/components/BurnoutCard";
 import CheckinPopup from "@/components/CheckinPopup";
 import MicroLog from "@/components/MicroLog";
@@ -238,7 +238,7 @@ export default function Dashboard() {
               <TrendChart data={dashboardData?.trend_data || []} />
             </div>
             <div className="mf-grid-full">
-              <AiAssistant burnoutScore={burnoutScore} />
+              <WellnessChatbot userId={user?.id} burnoutScore={burnoutScore} />
             </div>
           </div>
         </div>
