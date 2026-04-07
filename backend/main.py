@@ -4,6 +4,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from routes import ask, checkin, log, dashboard, personal_report, report_export, team, cognitive, wellness_chat
 import os
 
+
+def parse_cors_origins() -> tuple[list[str], bool]:
+    raw_origins = os.getenv("CORS_ORIGINS", "*")
+    origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
+    if not origins:
+        origins = ["*"]
+    allow_credentials = origins != ["*"]
+    return origins, allow_credentials
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Skip heavy indexing on Render (no persistent disk on free tier anyway)
@@ -32,10 +41,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+cors_origins, cors_allow_credentials = parse_cors_origins()
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=cors_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -53,3 +64,8 @@ app.include_router(wellness_chat.router)
 @app.get("/")
 def root():
     return {"status": "MindFlow backend is running"}
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
