@@ -15,7 +15,7 @@ import {
 
 export default function AnalyticsPage() {
   const { user: clerkUser, isLoaded } = useUser();
-  const user = clerkUser || { id: "test_user_dharmesh", firstName: "Dharmesh" };
+  const user = clerkUser || { id: "demo_dharmesh", firstName: "Dharmesh" };
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

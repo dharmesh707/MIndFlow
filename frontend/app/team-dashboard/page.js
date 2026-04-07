@@ -14,10 +14,7 @@ import {
 
 export default function TeamDashboard() {
   const { user: clerkUser, isLoaded } = useUser();
-  const user = clerkUser || {
-    id: "test_manager_deon",
-    firstName: "Deon",
-  };
+  const user = clerkUser || { id: "demo_manager", firstName: "Manager" };
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

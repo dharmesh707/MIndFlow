@@ -11,6 +11,7 @@ import TrendChart from "@/components/TrendChart";
 
 export default function Dashboard() {
   const { user, isLoaded } = useUser();
+  const effectiveUser = user || { id: "demo_dharmesh", firstName: "Dharmesh" };
   const router = useRouter();
   const [dashboardData, setDashboardData] = useState({
     trend_data: [],
@@ -25,14 +26,15 @@ export default function Dashboard() {
   useEffect(() => {
     if (!isLoaded) return;
     if (!user) {
-      setIsDashboardLoading(false);
-      return;
+      // no clerk session — fall through using demo_dharmesh
     }
 
     async function checkRoleAndLoad() {
       try {
         const apiBase = process.env.NEXT_PUBLIC_API_URL;
-        const roleRes = await fetch(`${apiBase}/api/team/role/${user.id}`);
+        const roleRes = await fetch(
+          `${apiBase}/api/team/role/${effectiveUser.id}`,
+        );
         if (roleRes.ok) {
           const roleData = await roleRes.json();
           if (roleData.role === "manager") {
@@ -47,7 +49,9 @@ export default function Dashboard() {
       // Only runs for students
       try {
         const apiBase = process.env.NEXT_PUBLIC_API_URL;
-        const res = await fetch(`${apiBase}/api/dashboard?user_id=${user.id}`);
+        const res = await fetch(
+          `${apiBase}/api/dashboard?user_id=${effectiveUser.id}`,
+        );
         if (!res.ok) throw new Error(`Dashboard API failed with ${res.status}`);
         const data = await res.json();
         setDashboardData({
@@ -80,7 +84,7 @@ export default function Dashboard() {
     }
   }
 
-  if (!isLoaded || (user && isDashboardLoading)) {
+  if (!isLoaded || isDashboardLoading) {
     return (
       <div
         style={{
@@ -205,7 +209,7 @@ export default function Dashboard() {
                 Mind<span>Flow</span>
               </div>
               <div className="mf-subtitle">
-                {`// welcome back, ${user?.firstName?.toLowerCase() || "developer"}`}
+                {`// welcome back, ${effectiveUser?.firstName?.toLowerCase() || "developer"}`}
               </div>
             </div>
             <div className="mf-header-actions">
@@ -231,21 +235,24 @@ export default function Dashboard() {
           <div className="mf-grid">
             <BurnoutCard score={burnoutScore} />
             <MicroLog
-              userId={user?.id}
+              userId={effectiveUser?.id}
               streak={dashboardData?.current_streak || 0}
             />
             <div className="mf-grid-full">
               <TrendChart data={dashboardData?.trend_data || []} />
             </div>
             <div className="mf-grid-full">
-              <WellnessChatbot userId={user?.id} burnoutScore={burnoutScore} />
+              <WellnessChatbot
+                userId={effectiveUser?.id}
+                burnoutScore={burnoutScore}
+              />
             </div>
           </div>
         </div>
 
         {showCheckin && (
           <CheckinPopup
-            userId={user?.id}
+            userId={effectiveUser?.id}
             onClose={() => setShowCheckin(false)}
             onCheckinDone={handleCheckinDone}
           />
