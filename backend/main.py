@@ -2,28 +2,32 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import ask, checkin, log, dashboard, personal_report, report_export, team, cognitive, wellness_chat
-import threading
-import asyncio
-import sys
-
-def run_indexing_in_thread():
-    from scripts.index_documents import index_all_docs
-    if sys.platform == "win32":
-        loop = asyncio.ProactorEventLoop()
-        asyncio.set_event_loop(loop)
-    else:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-    loop.run_until_complete(index_all_docs())
-    loop.close()
+import os
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("🚀 MindFlow backend starting — indexing in background...")
-    thread = threading.Thread(target=run_indexing_in_thread, daemon=True)
-    thread.start()
-    # NO thread.join() — let it index in background while server starts
-    print("✅ Server ready — indexing continues in background")
+    # Skip heavy indexing on Render (no persistent disk on free tier anyway)
+    # Indexing runs locally via: py scripts/index_documents.py
+    if not os.getenv("RENDER"):
+        try:
+            import threading, asyncio, sys
+            def run_indexing():
+                from scripts.index_documents import index_all_docs
+                if sys.platform == "win32":
+                    loop = asyncio.ProactorEventLoop()
+                    asyncio.set_event_loop(loop)
+                else:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                loop.run_until_complete(index_all_docs())
+                loop.close()
+            t = threading.Thread(target=run_indexing, daemon=True)
+            t.start()
+            print("✅ Local mode — indexing in background")
+        except Exception as e:
+            print(f"Indexing skipped: {e}")
+    else:
+        print("✅ Render mode — skipping indexing, backend ready instantly")
     yield
 
 app = FastAPI(lifespan=lifespan)
