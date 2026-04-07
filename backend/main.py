@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import ask, checkin, log, dashboard, personal_report, report_export, team, cognitive,  wellness_chat
+from routes import ask, checkin, log, dashboard, personal_report, report_export, team, cognitive, wellness_chat
 import threading
 import asyncio
 import sys
@@ -19,18 +19,18 @@ def run_indexing_in_thread():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("🚀 MindFlow backend starting — indexing documentation...")
-    thread = threading.Thread(target=run_indexing_in_thread)
+    print("🚀 MindFlow backend starting — indexing in background...")
+    thread = threading.Thread(target=run_indexing_in_thread, daemon=True)
     thread.start()
-    thread.join()
-    print("✅ Indexing done — backend ready!")
+    # NO thread.join() — let it index in background while server starts
+    print("✅ Server ready — indexing continues in background")
     yield
 
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001", "https://your-vercel-app.vercel.app"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
