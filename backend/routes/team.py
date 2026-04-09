@@ -307,3 +307,63 @@ async def get_team_dashboard(manager_id: str):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error fetching team dashboard: {str(e)}"
         )
+        
+@router.get("/api/team/my-team/{student_id}")
+async def get_my_team(student_id: str):
+    """Returns the team a student belongs to."""
+    try:
+        member_resp = supabase.table("team_members").select(
+            "team_id"
+        ).eq("student_id", student_id).execute()
+
+        if not member_resp.data:
+            return {"team": None}
+
+        team_id = member_resp.data[0]["team_id"]
+
+        team_resp = supabase.table("teams").select("*").eq(
+            "id", team_id
+        ).execute()
+
+        if not team_resp.data:
+            return {"team": None}
+
+        team = team_resp.data[0]
+
+        # Get all members
+        members_resp = supabase.table("team_members").select(
+            "student_id"
+        ).eq("team_id", team_id).execute()
+
+        members_data = []
+        today = __import__("datetime").date.today().isoformat()
+
+        for m in members_resp.data:
+            sid = m["student_id"]
+            user_resp = supabase.table("users").select("email").eq(
+                "clerk_user_id", sid
+            ).execute()
+            email = user_resp.data[0]["email"] if user_resp.data else "Unknown"
+
+            active_resp = supabase.table("session_logs").select("id").eq(
+                "user_id", sid
+            ).eq("session_date", today).execute()
+
+            members_data.append({
+                "email": email,
+                "active_today": len(active_resp.data) > 0,
+            })
+
+        return {
+            "team": {
+                "team_name": team["team_name"],
+                "invite_code": team["invite_code"],
+                "member_count": len(members_data),
+                "members": members_data,
+            }
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching team: {str(e)}"
+        )

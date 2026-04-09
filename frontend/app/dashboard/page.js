@@ -8,6 +8,7 @@ import BurnoutCard from "@/components/BurnoutCard";
 import CheckinPopup from "@/components/CheckinPopup";
 import MicroLog from "@/components/MicroLog";
 import TrendChart from "@/components/TrendChart";
+import TeamInfo from "@/components/TeamInfo";
 
 export default function Dashboard() {
   const { user, isLoaded } = useUser();
@@ -238,6 +239,7 @@ export default function Dashboard() {
               userId={effectiveUser?.id}
               streak={dashboardData?.current_streak || 0}
             />
+            <TeamInfo userId={effectiveUser?.id} />
             <div className="mf-grid-full">
               <TrendChart data={dashboardData?.trend_data || []} />
             </div>

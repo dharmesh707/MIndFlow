@@ -4,49 +4,31 @@ from fastapi.middleware.cors import CORSMiddleware
 from routes import ask, checkin, log, dashboard, personal_report, report_export, team, cognitive, wellness_chat
 import os
 
-
-def parse_cors_origins() -> tuple[list[str], bool]:
-    raw_origins = os.getenv("CORS_ORIGINS", "*")
-    origins = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
-    if not origins:
-        origins = ["*"]
-    allow_credentials = origins != ["*"]
-    return origins, allow_credentials
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Skip heavy indexing on Render (no persistent disk on free tier anyway)
-    # Indexing runs locally via: py scripts/index_documents.py
     if not os.getenv("RENDER"):
-        try:
-            import threading, asyncio, sys
-            def run_indexing():
+        import threading, asyncio, sys
+        def run_indexing():
+            try:
                 from scripts.index_documents import index_all_docs
-                if sys.platform == "win32":
-                    loop = asyncio.ProactorEventLoop()
-                    asyncio.set_event_loop(loop)
-                else:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
                 loop.run_until_complete(index_all_docs())
                 loop.close()
-            t = threading.Thread(target=run_indexing, daemon=True)
-            t.start()
-            print("✅ Local mode — indexing in background")
-        except Exception as e:
-            print(f"Indexing skipped: {e}")
+            except Exception as e:
+                print(f"Indexing error: {e}")
+        threading.Thread(target=run_indexing, daemon=True).start()
+        print("✅ Local mode — indexing in background")
     else:
-        print("✅ Render mode — skipping indexing, backend ready instantly")
+        print("✅ Render mode — skipping indexing")
     yield
 
 app = FastAPI(lifespan=lifespan)
 
-cors_origins, cors_allow_credentials = parse_cors_origins()
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=cors_allow_credentials,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -65,7 +47,6 @@ app.include_router(wellness_chat.router)
 def root():
     return {"status": "MindFlow backend is running"}
 
-
 @app.get("/health")
-def health_check():
+def health():
     return {"status": "ok"}
