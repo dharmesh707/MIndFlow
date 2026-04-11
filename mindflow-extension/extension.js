@@ -84,7 +84,7 @@ function startCognitiveAnalysisLoop() {
         const req = http.request(
           {
             hostname: "localhost",
-            port: 8000,
+            port: 8001,
             path: "/api/cognitive/analyze",
             method: "POST",
             headers: {
@@ -224,7 +224,7 @@ async function showCheckinPopup() {
       const req = http.request(
         {
           hostname: "localhost",
-          port: 8000,
+          port: 8001,
           path: "/api/checkin",
           method: "POST",
           headers: {
@@ -299,7 +299,7 @@ class MindFlowPanel {
             const req = http.request(
               {
                 hostname: "localhost",
-                port: 8000,
+                port: 8001,
                 path: "/api/ask",
                 method: "POST",
                 headers: {
@@ -327,7 +327,7 @@ class MindFlowPanel {
           webviewView.webview.postMessage({
             command: "error",
             message:
-              "Cannot connect to MindFlow backend. Make sure it is running on port 8000.",
+              "Cannot connect to MindFlow backend. Make sure it is running on port 8001.",
           });
         }
       }
@@ -383,7 +383,7 @@ function registerAutocompleteProvider(context) {
                 const req = http.request(
                   {
                     hostname: "localhost",
-                    port: 8000,
+                    port: 8001,
                     path: "/api/autocomplete",
                     method: "POST",
                     headers: {
