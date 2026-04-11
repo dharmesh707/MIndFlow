@@ -346,6 +346,84 @@ class MindFlowPanel {
   }
 }
 
+// ─── AI Autocomplete Provider ──────────────────────────────
+function registerAutocompleteProvider(context) {
+  let debounceTimer = null;
+  let lastSuggestion = null;
+
+  const provider = vscode.languages.registerInlineCompletionItemProvider(
+    { pattern: "**" }, // all file types
+    {
+      provideInlineCompletionItems(document, position) {
+        return new Promise((resolve) => {
+          // Debounce — wait 1.5s after user stops typing
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(async () => {
+            try {
+              const http = require("http");
+
+              // Get code context — last 50 lines
+              const startLine = Math.max(0, position.line - 50);
+              const range = new vscode.Range(
+                new vscode.Position(startLine, 0),
+                position,
+              );
+              const codeContext = document.getText(range);
+              const cursorLine = document.lineAt(position.line).text;
+              const language = document.languageId;
+
+              const body = JSON.stringify({
+                code_context: codeContext,
+                language: language,
+                cognitive_state: lastCognitiveState,
+                cursor_line: cursorLine,
+              });
+
+              const data = await new Promise((res, rej) => {
+                const req = http.request(
+                  {
+                    hostname: "localhost",
+                    port: 8000,
+                    path: "/api/autocomplete",
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Content-Length": Buffer.byteLength(body),
+                    },
+                  },
+                  (response) => {
+                    let raw = "";
+                    response.on("data", (chunk) => (raw += chunk));
+                    response.on("end", () => res(JSON.parse(raw)));
+                  },
+                );
+                req.on("error", rej);
+                req.write(body);
+                req.end();
+              });
+
+              if (data.suggestion && data.suggestion.trim()) {
+                lastSuggestion = data.suggestion;
+                const item = new vscode.InlineCompletionItem(
+                  data.suggestion,
+                  new vscode.Range(position, position),
+                );
+                resolve({ items: [item] });
+              } else {
+                resolve({ items: [] });
+              }
+            } catch (err) {
+              resolve({ items: [] }); // silent fail
+            }
+          }, 1500);
+        });
+      },
+    },
+  );
+
+  context.subscriptions.push(provider);
+}
+
 // ─── Activate ──────────────────────────────────────────────
 function activate(context) {
   provider = new MindFlowPanel(context.extensionUri);
@@ -354,6 +432,7 @@ function activate(context) {
   );
 
   startKeystrokeTracker(context);
+  registerAutocompleteProvider(context);
   startCognitiveAnalysisLoop();
 
   sessionStartTime = Date.now();

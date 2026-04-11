@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import ask, checkin, log, dashboard, personal_report, report_export, team, cognitive, wellness_chat
+from routes import ask, checkin, log, dashboard, personal_report, report_export, team, cognitive, wellness_chat,  autocomplete
 import os
 
 @asynccontextmanager
@@ -42,6 +42,7 @@ app.include_router(report_export.router)
 app.include_router(team.router)
 app.include_router(cognitive.router)
 app.include_router(wellness_chat.router)
+app.include_router(autocomplete.router)
 
 @app.get("/")
 def root():
