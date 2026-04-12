@@ -14,7 +14,6 @@
         margin: 0;
         padding: 0;
       }
-
       body {
         font-family: "JetBrains Mono", monospace;
         background: transparent;
@@ -22,34 +21,14 @@
         padding: 16px;
         font-size: 12px;
       }
-
       .mf-header {
-        margin-bottom: 20px;
+        margin-bottom: 14px;
         padding-bottom: 14px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
       }
-
-      <!-- Cognitive State Display -->
-  <div id="cognitive-banner" style="
-  display: none;
-  margin-bottom: 14px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: rgba(99,102,241,0.08);
-  border: 1px solid rgba(99,102,241,0.2);
-  font-size: 10px;
-  color: #818cf8;
-">
-  <div style="display:flex; justify-content:space-between; align-items:center;">
-    <span id="cognitive-label">// cognitive state</span>
-    <span id="cognitive-confidence" style="color:#334155"></span>
-  </div>
-  <div id="cognitive-state" style="font-size:13px; font-weight:700; margin-top:4px; color:#e2e8f0;">
-    detecting...
-  </div>
-</div>
-
-
       .mf-logo {
         font-family: "Syne", sans-serif;
         font-size: 18px;
@@ -59,18 +38,50 @@
         line-height: 1;
         margin-bottom: 4px;
       }
-
       .mf-logo span {
         color: #6366f1;
       }
-
       .mf-tagline {
         font-size: 10px;
         color: #334155;
         letter-spacing: 0.08em;
       }
 
-      /* Section label */
+      /* Tabs */
+      .mf-tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 16px;
+      }
+      .mf-tab {
+        flex: 1;
+        padding: 6px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.02);
+        color: #334155;
+        text-align: center;
+        transition: all 0.15s;
+      }
+      .mf-tab.active {
+        background: rgba(99, 102, 241, 0.12);
+        border-color: rgba(99, 102, 241, 0.35);
+        color: #818cf8;
+      }
+
+      /* Tab panels */
+      .mf-panel {
+        display: none;
+      }
+      .mf-panel.active {
+        display: block;
+      }
+
       .mf-label {
         font-size: 9px;
         font-weight: 600;
@@ -79,14 +90,11 @@
         text-transform: uppercase;
         margin-bottom: 6px;
       }
-
-      /* Mode buttons */
       .mf-mode-row {
         display: flex;
         gap: 6px;
         margin-bottom: 14px;
       }
-
       .mf-mode-btn {
         flex: 1;
         padding: 8px 6px;
@@ -105,26 +113,21 @@
         justify-content: center;
         gap: 5px;
       }
-
       .mf-mode-btn.active-guide {
         background: rgba(99, 102, 241, 0.12);
         border-color: rgba(99, 102, 241, 0.35);
         color: #818cf8;
       }
-
       .mf-mode-btn.active-show {
         background: rgba(34, 211, 238, 0.08);
         border-color: rgba(34, 211, 238, 0.25);
         color: #22d3ee;
       }
-
-      /* Burnout selector */
       .mf-burnout-row {
         display: flex;
         gap: 5px;
         margin-bottom: 14px;
       }
-
       .mf-burnout-btn {
         flex: 1;
         padding: 7px 4px;
@@ -140,33 +143,26 @@
         transition: all 0.15s ease;
         text-align: center;
       }
-
       .mf-burnout-btn.active-low {
         background: rgba(34, 211, 238, 0.08);
         border-color: rgba(34, 211, 238, 0.25);
         color: #22d3ee;
       }
-
       .mf-burnout-btn.active-mid {
         background: rgba(245, 158, 11, 0.08);
         border-color: rgba(245, 158, 11, 0.25);
         color: #f59e0b;
       }
-
       .mf-burnout-btn.active-high {
         background: rgba(239, 68, 68, 0.08);
         border-color: rgba(239, 68, 68, 0.25);
         color: #ef4444;
       }
-
-      /* Divider */
       .mf-divider {
         height: 1px;
         background: rgba(255, 255, 255, 0.04);
         margin: 14px 0;
       }
-
-      /* Inputs */
       textarea {
         width: 100%;
         padding: 10px;
@@ -182,22 +178,17 @@
         margin-bottom: 10px;
         line-height: 1.6;
       }
-
       textarea::placeholder {
         color: #1e293b;
       }
-
       textarea:focus {
         border-color: rgba(99, 102, 241, 0.3);
         background: rgba(99, 102, 241, 0.02);
       }
-
       #code-input {
         color: #64748b;
         font-size: 10px;
       }
-
-      /* Ask button */
       #ask-btn {
         width: 100%;
         padding: 10px;
@@ -214,18 +205,12 @@
         color: white;
         box-shadow: 0 2px 12px rgba(99, 102, 241, 0.25);
       }
-
-      #ask-btn:hover {
-        box-shadow: 0 2px 20px rgba(99, 102, 241, 0.4);
-      }
       #ask-btn:disabled {
         background: rgba(99, 102, 241, 0.15);
         color: #6366f1;
         box-shadow: none;
         cursor: not-allowed;
       }
-
-      /* Error */
       #error-area {
         display: none;
         padding: 10px;
@@ -237,12 +222,9 @@
         margin-bottom: 10px;
         line-height: 1.5;
       }
-
-      /* Response */
       #response-area {
         display: none;
       }
-
       .mf-response-header {
         display: flex;
         justify-content: space-between;
@@ -255,30 +237,25 @@
         font-size: 9px;
         letter-spacing: 0.08em;
       }
-
       .mf-response-mode {
         color: #475569;
       }
-
       .mf-badge {
         font-size: 9px;
         padding: 2px 7px;
         border-radius: 20px;
         font-weight: 600;
       }
-
       .badge-grounded {
         background: rgba(34, 211, 238, 0.08);
         color: #22d3ee;
         border: 1px solid rgba(34, 211, 238, 0.2);
       }
-
       .badge-general {
         background: rgba(99, 102, 241, 0.08);
         color: #818cf8;
         border: 1px solid rgba(99, 102, 241, 0.2);
       }
-
       #response-text {
         padding: 12px;
         font-size: 11px;
@@ -292,24 +269,105 @@
         color: #cbd5e1;
         word-break: break-word;
       }
-
-      /* Scrollbar */
       #response-text::-webkit-scrollbar {
         width: 3px;
-      }
-      #response-text::-webkit-scrollbar-track {
-        background: transparent;
       }
       #response-text::-webkit-scrollbar-thumb {
         background: rgba(99, 102, 241, 0.3);
         border-radius: 2px;
       }
+
+      /* Settings tab styles */
+      .mf-settings-section {
+        margin-bottom: 20px;
+      }
+      .mf-settings-title {
+        font-size: 10px;
+        color: #6366f1;
+        letter-spacing: 0.1em;
+        margin-bottom: 12px;
+      }
+      .mf-input {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(255, 255, 255, 0.02);
+        color: #e2e8f0;
+        font-size: 11px;
+        outline: none;
+        font-family: "JetBrains Mono", monospace;
+        margin-bottom: 8px;
+      }
+      .mf-input:focus {
+        border-color: rgba(99, 102, 241, 0.3);
+      }
+      .mf-input::placeholder {
+        color: #334155;
+      }
+      .mf-save-btn {
+        width: 100%;
+        padding: 9px;
+        border-radius: 8px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: 0.08em;
+        border: none;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: white;
+        margin-bottom: 8px;
+      }
+      .mf-save-btn:hover {
+        opacity: 0.9;
+      }
+      .mf-status {
+        font-size: 10px;
+        color: #22d3ee;
+        display: none;
+        margin-bottom: 8px;
+      }
+      .mf-user-display {
+        padding: 10px;
+        border-radius: 8px;
+        background: rgba(34, 211, 238, 0.05);
+        border: 1px solid rgba(34, 211, 238, 0.15);
+        font-size: 10px;
+        color: #22d3ee;
+        margin-bottom: 14px;
+        display: none;
+      }
+      .mf-hint {
+        font-size: 9px;
+        color: #334155;
+        line-height: 1.5;
+        margin-bottom: 12px;
+      }
+      .mf-link {
+        color: #6366f1;
+        cursor: pointer;
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
     <div class="mf-header">
-      <div class="mf-logo">Mind<span>Flow</span></div>
-      <div class="mf-tagline">// ai pair programmer</div>
+      <div>
+        <div class="mf-logo">Mind<span>Flow</span></div>
+        <div class="mf-tagline">// ai pair programmer</div>
+      </div>
+      <div
+        id="user-indicator"
+        style="
+          font-size: 9px;
+          color: #334155;
+          text-align: right;
+          margin-top: 4px;
+        "
+      >
+        not connected
+      </div>
     </div>
 
     <!-- Cognitive State Banner -->
@@ -349,75 +407,191 @@
       </div>
     </div>
 
-    <div class="mf-label">mode</div>
-    <div class="mf-mode-row">
-      <button
-        class="mf-mode-btn active-guide"
-        id="btn-guide"
-        onclick="setMode('guide')"
-      >
-        ◈ guide me
-      </button>
-      <button class="mf-mode-btn" id="btn-show" onclick="setMode('show')">
-        ◉ show me
-      </button>
-    </div>
-
-    <div class="mf-label">energy level</div>
-    <div class="mf-burnout-row">
-      <button
-        class="mf-burnout-btn active-low"
-        id="btn-low"
-        onclick="setBurnout('Low')"
-      >
-        ▲ fresh
-      </button>
-      <button
-        class="mf-burnout-btn"
-        id="btn-mid"
-        onclick="setBurnout('Medium')"
-      >
-        ◆ okay
-      </button>
-      <button class="mf-burnout-btn" id="btn-high" onclick="setBurnout('High')">
-        ▼ tired
-      </button>
-    </div>
-
-    <div class="mf-divider"></div>
-
-    <div class="mf-label">your question</div>
-    <textarea
-      id="question-input"
-      rows="4"
-      placeholder="what are you stuck on?"
-    ></textarea>
-
-    <div class="mf-label">code context (optional)</div>
-    <textarea
-      id="code-input"
-      rows="3"
-      placeholder="paste broken code here..."
-    ></textarea>
-
-    <button id="ask-btn" onclick="askQuestion()">ask mindflow →</button>
-
-    <div id="error-area"></div>
-
-    <div id="response-area">
-      <div class="mf-response-header">
-        <span class="mf-response-mode" id="mode-label">◈ guide me</span>
-        <span class="mf-badge badge-grounded" id="grounded-badge"
-          >◆ doc grounded</span
-        >
+    <!-- Tabs -->
+    <div class="mf-tabs">
+      <div class="mf-tab active" id="tab-ask" onclick="switchTab('ask')">
+        ◈ ask
       </div>
-      <div id="response-text"></div>
+      <div class="mf-tab" id="tab-settings" onclick="switchTab('settings')">
+        ⚙ settings
+      </div>
+    </div>
+
+    <!-- ASK PANEL -->
+    <div class="mf-panel active" id="panel-ask">
+      <div class="mf-label">mode</div>
+      <div class="mf-mode-row">
+        <button
+          class="mf-mode-btn active-guide"
+          id="btn-guide"
+          onclick="setMode('guide')"
+        >
+          ◈ guide me
+        </button>
+        <button class="mf-mode-btn" id="btn-show" onclick="setMode('show')">
+          ◉ show me
+        </button>
+      </div>
+      <div class="mf-label">energy level</div>
+      <div class="mf-burnout-row">
+        <button
+          class="mf-burnout-btn active-low"
+          id="btn-low"
+          onclick="setBurnout('Low')"
+        >
+          ▲ fresh
+        </button>
+        <button
+          class="mf-burnout-btn"
+          id="btn-mid"
+          onclick="setBurnout('Medium')"
+        >
+          ◆ okay
+        </button>
+        <button
+          class="mf-burnout-btn"
+          id="btn-high"
+          onclick="setBurnout('High')"
+        >
+          ▼ tired
+        </button>
+      </div>
+      <div class="mf-divider"></div>
+      <div class="mf-label">your question</div>
+      <textarea
+        id="question-input"
+        rows="4"
+        placeholder="what are you stuck on?"
+      ></textarea>
+      <div class="mf-label">code context (optional)</div>
+      <textarea
+        id="code-input"
+        rows="3"
+        placeholder="paste broken code here..."
+      ></textarea>
+      <button id="ask-btn" onclick="askQuestion()">ask mindflow →</button>
+      <div id="error-area"></div>
+      <div id="response-area">
+        <div class="mf-response-header">
+          <span class="mf-response-mode" id="mode-label">◈ guide me</span>
+          <span class="mf-badge badge-grounded" id="grounded-badge"
+            >◆ doc grounded</span
+          >
+        </div>
+        <div id="response-text"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PANEL -->
+    <div class="mf-panel" id="panel-settings">
+      <div class="mf-settings-section">
+        <div class="mf-settings-title">// account connection</div>
+
+        <div id="user-display" class="mf-user-display"></div>
+
+        <div class="mf-hint">
+          Connect your MindFlow account so check-ins and cognitive states sync
+          to your dashboard.<br /><br />
+          Find your User ID: sign in at
+          <span class="mf-link" onclick="openDashboard()">localhost:3000</span>
+          → your profile shows the ID, or ask your admin.
+        </div>
+
+        <div class="mf-label">your user id</div>
+        <input
+          class="mf-input"
+          id="user-id-input"
+          type="text"
+          placeholder="user_xxxxxxxxxxxxxxxxx"
+        />
+        <div class="mf-status" id="save-status">
+          ✅ saved — dashboard connected
+        </div>
+        <button class="mf-save-btn" onclick="saveUserId()">
+          save & connect →
+        </button>
+
+        <button
+          class="mf-save-btn"
+          style="background: rgba(239, 68, 68, 0.15); color: #ef4444"
+          onclick="clearUserId()"
+        >
+          disconnect account
+        </button>
+      </div>
+
+      <div class="mf-divider"></div>
+
+      <div class="mf-settings-section">
+        <div class="mf-settings-title">// backend connection</div>
+        <div class="mf-hint">
+          Backend running on port 8001. Make sure uvicorn is running before
+          using MindFlow features.
+        </div>
+        <button
+          class="mf-save-btn"
+          style="
+            background: rgba(99, 102, 241, 0.1);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+          "
+          onclick="testConnection()"
+        >
+          test connection →
+        </button>
+        <div
+          id="conn-status"
+          style="font-size: 10px; margin-bottom: 8px; display: none"
+        ></div>
+      </div>
     </div>
 
     <script>
       const vscode = acquireVsCodeApi();
       let currentMode = "guide";
       let currentBurnout = "Low";
+
+      function switchTab(tab) {
+        document
+          .querySelectorAll(".mf-tab")
+          .forEach((t) => t.classList.remove("active"));
+        document
+          .querySelectorAll(".mf-panel")
+          .forEach((p) => p.classList.remove("active"));
+        document.getElementById("tab-" + tab).classList.add("active");
+        document.getElementById("panel-" + tab).classList.add("active");
+      }
+
+      function saveUserId() {
+        const id = document.getElementById("user-id-input").value.trim();
+        if (!id) return;
+        vscode.postMessage({ command: "saveUserId", userId: id });
+        document.getElementById("save-status").style.display = "block";
+        document.getElementById("user-display").style.display = "block";
+        document.getElementById("user-display").textContent =
+          "● connected: " + id.substring(0, 20) + "...";
+        document.getElementById("user-indicator").textContent = "● connected";
+        document.getElementById("user-indicator").style.color = "#22d3ee";
+        setTimeout(() => {
+          document.getElementById("save-status").style.display = "none";
+        }, 3000);
+      }
+
+      function clearUserId() {
+        vscode.postMessage({ command: "clearUserId" });
+        document.getElementById("user-id-input").value = "";
+        document.getElementById("user-display").style.display = "none";
+        document.getElementById("user-indicator").textContent = "not connected";
+        document.getElementById("user-indicator").style.color = "#334155";
+      }
+
+      function testConnection() {
+        vscode.postMessage({ command: "testConnection" });
+      }
+
+      function openDashboard() {
+        vscode.postMessage({ command: "openDashboard" });
+      }
 
       function setMode(mode) {
         currentMode = mode;
@@ -440,17 +614,14 @@
       function askQuestion() {
         const question = document.getElementById("question-input").value.trim();
         if (!question) return;
-
         const btn = document.getElementById("ask-btn");
         btn.disabled = true;
         btn.textContent = "thinking...";
-
         document.getElementById("response-area").style.display = "none";
         document.getElementById("error-area").style.display = "none";
-
         vscode.postMessage({
           command: "ask",
-          question: question,
+          question,
           mode: currentMode,
           burnout_score: currentBurnout,
           code_context: document.getElementById("code-input").value.trim(),
@@ -459,20 +630,35 @@
 
       window.addEventListener("message", (event) => {
         const msg = event.data;
-        const btn = document.getElementById("ask-btn");
-        btn.disabled = false;
-        btn.textContent = "ask mindflow →";
+
+        if (msg.command === "loadedUserId") {
+          if (msg.userId) {
+            document.getElementById("user-id-input").value = msg.userId;
+            document.getElementById("user-display").style.display = "block";
+            document.getElementById("user-display").textContent =
+              "● connected: " + msg.userId.substring(0, 20) + "...";
+            document.getElementById("user-indicator").textContent =
+              "● connected";
+            document.getElementById("user-indicator").style.color = "#22d3ee";
+          }
+        }
+
+        if (msg.command === "connectionResult") {
+          const el = document.getElementById("conn-status");
+          el.style.display = "block";
+          el.style.color = msg.success ? "#22d3ee" : "#ef4444";
+          el.textContent = msg.success
+            ? "✅ backend is running"
+            : "❌ cannot reach backend";
+        }
 
         if (msg.command === "cognitiveState") {
           const banner = document.getElementById("cognitive-banner");
-          const stateEl = document.getElementById("cognitive-state");
-          const confEl = document.getElementById("cognitive-confidence");
-
           banner.style.display = "block";
-          stateEl.textContent = msg.emoji + " " + msg.state;
-          confEl.textContent = Math.round(msg.confidence) + "% confidence";
-
-          // Color by state
+          document.getElementById("cognitive-state").textContent =
+            msg.emoji + " " + msg.state;
+          document.getElementById("cognitive-confidence").textContent =
+            Math.round(msg.confidence) + "% confidence";
           const colors = {
             flow: "rgba(34,211,238,0.08)",
             struggling: "rgba(245,158,11,0.08)",
@@ -483,22 +669,25 @@
         }
 
         if (msg.command === "response") {
+          const btn = document.getElementById("ask-btn");
+          btn.disabled = false;
+          btn.textContent = "ask mindflow →";
           document.getElementById("response-area").style.display = "block";
           document.getElementById("response-text").textContent = msg.answer;
           document.getElementById("mode-label").textContent =
             msg.mode_used === "guide" ? "◈ guide me" : "◉ show me";
-
           const badge = document.getElementById("grounded-badge");
-          if (msg.grounded) {
-            badge.textContent = "◆ doc grounded";
-            badge.className = "mf-badge badge-grounded";
-          } else {
-            badge.textContent = "◇ general guidance";
-            badge.className = "mf-badge badge-general";
-          }
+          badge.textContent = msg.grounded
+            ? "◆ doc grounded"
+            : "◇ general guidance";
+          badge.className =
+            "mf-badge " + (msg.grounded ? "badge-grounded" : "badge-general");
         }
 
         if (msg.command === "error") {
+          const btn = document.getElementById("ask-btn");
+          btn.disabled = false;
+          btn.textContent = "ask mindflow →";
           const e = document.getElementById("error-area");
           e.style.display = "block";
           e.textContent = "⚠ " + msg.message;

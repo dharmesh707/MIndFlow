@@ -1,5 +1,7 @@
 const vscode = require("vscode");
 
+let currentUserId = "vscode_user";
+
 // ─── Keystroke Tracker State ───────────────────────────────
 let keystrokeEvents = [];
 let sessionAvgSpeed = null;
@@ -71,7 +73,7 @@ function startCognitiveAnalysisLoop() {
       const http = require("http");
       const today = new Date().toISOString().split("T")[0];
       const body = JSON.stringify({
-        user_id: "vscode_user",
+        user_id: currentUserId,
         typing_speed: features.typingSpeed,
         pause_frequency: features.pauseFrequency,
         backspace_ratio: features.backspaceRatio,
@@ -213,7 +215,7 @@ async function showCheckinPopup() {
     const data = await new Promise((resolve, reject) => {
       const http = require("http");
       const body = JSON.stringify({
-        user_id: "vscode_user",
+        user_id: currentUserId,
         session_date: today,
         checkin_number: checkinCount,
         energy_level: energyPick.value,
@@ -276,8 +278,9 @@ function getBurnoutEmoji(score) {
 
 // ─── Webview Panel ─────────────────────────────────────────
 class MindFlowPanel {
-  constructor(extensionUri) {
+  constructor(extensionUri, context) {
     this.extensionUri = extensionUri;
+    this.context = context; // ← context passed in
   }
 
   resolveWebviewView(webviewView) {
@@ -285,7 +288,59 @@ class MindFlowPanel {
     webviewView.webview.options = { enableScripts: true };
     webviewView.webview.html = this._getHtml();
 
+    // Load saved user ID and send to webview
+    const savedId = this.context.globalState.get("mindflow_user_id");
+    if (savedId) currentUserId = savedId;
+    setTimeout(() => {
+      webviewView.webview.postMessage({
+        command: "loadedUserId",
+        userId: savedId || null,
+      });
+    }, 500);
+
     webviewView.webview.onDidReceiveMessage(async (message) => {
+      // ── Settings commands ──────────────────────────────
+      if (message.command === "saveUserId") {
+        this.context.globalState.update("mindflow_user_id", message.userId);
+        currentUserId = message.userId;
+        return;
+      }
+
+      if (message.command === "clearUserId") {
+        this.context.globalState.update("mindflow_user_id", null);
+        currentUserId = "vscode_user";
+        return;
+      }
+
+      if (message.command === "testConnection") {
+        const http = require("http");
+        const req = http.request(
+          { hostname: "localhost", port: 8001, path: "/", method: "GET" },
+          () => {
+            webviewView.webview.postMessage({
+              command: "connectionResult",
+              success: true,
+            });
+          },
+        );
+        req.on("error", () => {
+          webviewView.webview.postMessage({
+            command: "connectionResult",
+            success: false,
+          });
+        });
+        req.end();
+        return;
+      }
+
+      if (message.command === "openDashboard") {
+        vscode.env.openExternal(
+          vscode.Uri.parse("http://localhost:3000/dashboard"),
+        );
+        return;
+      }
+
+      // ── Ask command ────────────────────────────────────
       if (message.command === "ask") {
         try {
           const http = require("http");
@@ -349,20 +404,16 @@ class MindFlowPanel {
 // ─── AI Autocomplete Provider ──────────────────────────────
 function registerAutocompleteProvider(context) {
   let debounceTimer = null;
-  let lastSuggestion = null;
 
   const provider = vscode.languages.registerInlineCompletionItemProvider(
-    { pattern: "**" }, // all file types
+    { pattern: "**" },
     {
       provideInlineCompletionItems(document, position) {
         return new Promise((resolve) => {
-          // Debounce — wait 1.5s after user stops typing
           if (debounceTimer) clearTimeout(debounceTimer);
           debounceTimer = setTimeout(async () => {
             try {
               const http = require("http");
-
-              // Get code context — last 50 lines
               const startLine = Math.max(0, position.line - 50);
               const range = new vscode.Range(
                 new vscode.Position(startLine, 0),
@@ -403,7 +454,6 @@ function registerAutocompleteProvider(context) {
               });
 
               if (data.suggestion && data.suggestion.trim()) {
-                lastSuggestion = data.suggestion;
                 const item = new vscode.InlineCompletionItem(
                   data.suggestion,
                   new vscode.Range(position, position),
@@ -413,7 +463,7 @@ function registerAutocompleteProvider(context) {
                 resolve({ items: [] });
               }
             } catch (err) {
-              resolve({ items: [] }); // silent fail
+              resolve({ items: [] });
             }
           }, 1500);
         });
@@ -426,7 +476,7 @@ function registerAutocompleteProvider(context) {
 
 // ─── Activate ──────────────────────────────────────────────
 function activate(context) {
-  provider = new MindFlowPanel(context.extensionUri);
+  provider = new MindFlowPanel(context.extensionUri, context); // ← pass context
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider("mindflow.panel", provider),
   );
