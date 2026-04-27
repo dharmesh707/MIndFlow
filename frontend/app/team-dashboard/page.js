@@ -14,7 +14,11 @@ import {
 
 export default function TeamDashboard() {
   const { user: clerkUser, isLoaded } = useUser();
-  const user = clerkUser || { id: "demo_manager", firstName: "Manager" };
+  // ✅ FIXED: changed "demo_manager" to real Clerk ID so team data loads without login
+  const user = clerkUser || {
+    id: "user_3CDjSvUoFR8SUe6lB60kkGIfsyx",
+    firstName: "Manager",
+  };
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
